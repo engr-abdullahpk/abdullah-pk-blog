@@ -1,3 +1,4 @@
+console.log("App script initialized successfully!");
 import { 
   createUserWithEmailAndPassword, 
   signInWithEmailAndPassword, 
