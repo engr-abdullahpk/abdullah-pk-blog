@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Abdullah Pk's Blog</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=MedievalSharp&family=Tangerine:wght@700&display=swap" rel="stylesheet">
+  <!-- html2pdf Library for PDF Download -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+</head>
+<body>
+
+  <header class="header-container">
+    <div class="header-content">
+      <h1 class="logo">Abdullah Pk's Blog</h1>
+      <div class="search-bar">
+        <input type="text" id="searchInput" placeholder="Search ancient manuscripts...">
+      </div>
+      <nav id="navLinks">
+        <button id="authBtn" onclick="toggleAuthModal()">Sign In</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="main-container">
+    <div class="book-cover-frame">
+      <div class="page-container" id="postsContainer">
+        <!-- Blog posts will dynamically populate here -->
+      </div>
+      <div class="pagination" id="paginationControls"></div>
+    </div>
+  </main>
+
+  <footer class="footer-container">
+    <div class="footer-content">
+      <p>&copy; 2026 Abdullah Pk's Blog. Preserved in Antiquity.</p>
+    </div>
+  </footer>
+
+  <!-- Firebase SDKs -->
+  <script type="module" src="app.js"></script>
+</body>
+</html>
