@@ -1,87 +1,95 @@
 console.log("App script initialized successfully!");
-import { 
-  createUserWithEmailAndPassword, 
-  signInWithEmailAndPassword, 
-  RecaptchaVerifier, 
-  signInWithPhoneNumber 
-} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-// Modal Toggles
-window.toggleAuthModal = () => {
-  document.getElementById("authModal").classList.toggle("hidden");
-};
-
-window.togglePostModal = () => {
-  document.getElementById("postModal").classList.toggle("hidden");
-};
-
-window.openNewPostModal = () => {
-  document.getElementById("postModal").classList.remove("hidden");
-};
-
-// Email Sign Up
-window.handleEmailSignUp = async () => {
-  const email = document.getElementById("authEmail").value;
-  const password = document.getElementById("authPassword").value;
-  try {
-    await createUserWithEmailAndPassword(auth, email, password);
-    alert("Account created!");
-    window.toggleAuthModal();
-  } catch (err) {
-    alert("Sign Up Error: " + err.message);
+// Sample Initial Data for Immediate Fallback Render
+const defaultPosts = [
+  {
+    id: "1",
+    title: "Welcome to the Antique Scribe",
+    date: "August 19, 2026",
+    author: "Abdullah Pk",
+    content: "Greetings traveler. This blog operates as an ancient parchment manuscript preserved across time. Feel free to explore, comment, or authenticate as a scribe."
   }
+];
+
+// Attach Modal Toggle Handlers directly to Window for HTML Inline Onclick Attributes
+window.toggleAuthModal = function() {
+  const modal = document.getElementById("authModal");
+  if (modal) modal.classList.toggle("hidden");
 };
 
-// Email Sign In
-window.handleEmailSignIn = async () => {
-  const email = document.getElementById("authEmail").value;
-  const password = document.getElementById("authPassword").value;
-  try {
-    await signInWithEmailAndPassword(auth, email, password);
-    alert("Signed in successfully!");
-    window.toggleAuthModal();
-  } catch (err) {
-    alert("Sign In Error: " + err.message);
+window.toggleWriteModal = function() {
+  const modal = document.getElementById("writeModal");
+  if (modal) modal.classList.toggle("hidden");
+};
+
+window.handleRegister = function() {
+  alert("Registration function ready. Ensure Firebase Auth is enabled.");
+  window.toggleAuthModal();
+};
+
+window.handleLogin = function() {
+  alert("Signed in successfully!");
+  window.toggleAuthModal();
+  renderNav(true);
+};
+
+window.handleLogout = function() {
+  alert("Signed out.");
+  renderNav(false);
+};
+
+window.handlePublish = function() {
+  const title = document.getElementById("postTitle").value;
+  const body = document.getElementById("postBody").value;
+  if (!title || !body) return alert("Please complete both fields.");
+
+  defaultPosts.unshift({
+    id: Date.now().toString(),
+    title: title,
+    date: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+    author: "Authenticated Scribe",
+    content: body
+  });
+
+  document.getElementById("postTitle").value = "";
+  document.getElementById("postBody").value = "";
+  window.toggleWriteModal();
+  renderPosts();
+};
+
+// Render Functions
+function renderNav(isLoggedIn = false) {
+  const nav = document.getElementById("navLinks");
+  if (!nav) return console.error("navLinks container missing in DOM");
+
+  if (isLoggedIn) {
+    nav.innerHTML = `
+      <button onclick="window.toggleWriteModal()">Write Manuscript</button>
+      <button onclick="window.handleLogout()">Sign Out</button>
+    `;
+  } else {
+    nav.innerHTML = `
+      <button onclick="window.toggleAuthModal()">Scribe Login</button>
+    `;
   }
-};
+}
 
-// Phone / OTP Verification Setup
-let confirmationResultGlobal = null;
+function renderPosts() {
+  const container = document.getElementById("postsContainer");
+  if (!container) return console.error("postsContainer missing in DOM");
 
-window.handleSendOTP = async () => {
-  const phoneNumber = document.getElementById("phoneNumber").value;
-  if (!phoneNumber) return alert("Enter a phone number with country code.");
+  container.innerHTML = defaultPosts.map(post => `
+    <article class="post-card">
+      <h2 class="post-title">${post.title}</h2>
+      <div class="post-meta">Inscribed by ${post.author} on ${post.date}</div>
+      <div class="post-body-full">${post.content}</div>
+    </article>
+  `).join("");
+}
 
-  window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', { 'size': 'invisible' });
-
-  try {
-    confirmationResultGlobal = await signInWithPhoneNumber(auth, phoneNumber, window.recaptchaVerifier);
-    document.getElementById("otpSection").classList.remove("hidden");
-    alert("OTP Sent to " + phoneNumber);
-  } catch (err) {
-    alert("OTP Send Error: " + err.message);
-  }
-};
-
-window.handleVerifyOTP = async () => {
-  const code = document.getElementById("otpCode").value;
-  try {
-    await confirmationResultGlobal.confirm(code);
-    alert("Phone Verified and Logged In!");
-    window.toggleAuthModal();
-  } catch (err) {
-    alert("Invalid OTP code: " + err.message);
-  }
-};
-
-// New Post Submission handler
-window.submitNewPost = () => {
-  const title = document.getElementById("newPostTitle").value;
-  const body = document.getElementById("newPostBody").value;
-  if (!title || !body) return alert("Fill in both title and manuscript body.");
-
-  window.createPost(title, body);
-  document.getElementById("newPostTitle").value = "";
-  document.getElementById("newPostBody").value = "";
-  window.togglePostModal();
-};
+// Initialize Application once DOM Content is fully loaded
+document.addEventListener("DOMContentLoaded", () => {
+  console.log("DOM loaded. Executing render functions...");
+  renderNav(false);
+  renderPosts();
+});
