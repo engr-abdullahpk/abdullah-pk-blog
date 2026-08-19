@@ -1,4 +1,189 @@
-/* Modals */
+/* --- 1. GLOBAL VARIABLES & ANTIQUE THEME --- */
+:root {
+  --header-bg: #2b1d0c;
+  --gold-accent: #d4af37;
+  --paper-bg: #f4e4bc;
+  --ink-color: #2c1a0e;
+  --dark-border: #8b5a2b;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #1a0f07;
+  color: var(--ink-color);
+  font-family: 'MedievalSharp', cursive;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* --- 2. FIXED HEADER & ALIGNED FOOTER --- */
+.header-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 60px;
+  background: var(--header-bg);
+  border-bottom: 2px solid var(--gold-accent);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+}
+
+.footer-container {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 50px;
+  background: var(--header-bg);
+  border-top: 2px solid var(--gold-accent);
+  display: flex;
+  align-items: center;
+  color: var(--gold-accent);
+  z-index: 1000;
+}
+
+/* Header & Footer Layout Alignment */
+.header-content, .footer-content {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logo {
+  color: var(--gold-accent);
+  font-family: 'Great Vibes', cursive;
+  font-size: 1.8rem;
+  margin: 0;
+}
+
+/* Navigation Buttons */
+#navLinks button, button {
+  background: var(--header-bg);
+  color: var(--gold-accent);
+  border: 1px solid var(--gold-accent);
+  padding: 6px 14px;
+  cursor: pointer;
+  font-family: 'MedievalSharp', cursive;
+  border-radius: 3px;
+  transition: all 0.3s ease;
+}
+
+#navLinks button:hover, button:hover {
+  background: var(--gold-accent);
+  color: var(--header-bg);
+}
+
+/* --- 3. MAIN CONTENT & DAMAGED PAPER POST CARDS --- */
+.main-container {
+  margin-top: 80px;
+  margin-bottom: 70px;
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  padding: 0 20px;
+}
+
+.book-cover-frame {
+  width: 100%;
+  max-width: 900px;
+  perspective: 1000px; /* 3D effect for book page turn */
+}
+
+/* Damaged Old Page / Parchment Effect */
+.post-card {
+  background: var(--paper-bg);
+  background-image: radial-gradient(#e2c992 10%, transparent 11%);
+  background-size: 10px 10px;
+  border: 1px solid var(--dark-border);
+  box-shadow: inset 0 0 30px rgba(0,0,0,0.4), 5px 5px 15px rgba(0,0,0,0.7);
+  padding: 25px;
+  margin-bottom: 25px;
+  border-radius: 4px;
+  transition: transform 0.8s ease, opacity 0.8s ease;
+  transform-style: preserve-3d;
+}
+
+/* Book Opening Page-Turn Animation Class */
+.post-card.page-turn-anim {
+  transform: rotateY(-90deg);
+  opacity: 0.3;
+}
+
+.post-title {
+  font-family: 'Great Vibes', cursive;
+  font-size: 2.2rem;
+  margin-top: 0;
+  color: #2b1d0c;
+}
+
+.post-meta {
+  font-size: 0.85rem;
+  color: #5a3e1b;
+  margin-bottom: 15px;
+  border-bottom: 1px dashed var(--dark-border);
+  padding-bottom: 5px;
+}
+
+.post-body-preview, .post-body-full {
+  font-family: 'Tangerine', cursive;
+  font-size: 1.8rem;
+  line-height: 1.4;
+  white-space: pre-wrap;
+}
+
+.post-actions {
+  margin-top: 15px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* Comments Section */
+.comments-section {
+  margin-top: 20px;
+  border-top: 1px solid var(--dark-border);
+  padding-top: 15px;
+}
+
+.comment-item {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 8px 12px;
+  border-radius: 3px;
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+}
+
+.add-comment {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.add-comment input {
+  flex: 1;
+  padding: 6px;
+  background: #e6d3a3;
+  border: 1px solid var(--dark-border);
+  font-family: 'MedievalSharp', cursive;
+}
+
+/* --- 4. MODALS & UTILITIES --- */
+.hidden {
+  display: none !important;
+}
+
 .modal {
   position: fixed;
   top: 0;
@@ -42,14 +227,12 @@
   box-sizing: border-box;
 }
 
-.hidden {
-  display: none !important;
-}
-
-/* Header & Footer Layout Alignment */
-.header-content, .footer-content {
-  width: 100%;
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 0 20px;
+/* Pagination Styling */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+  margin: 20px 0;
+  color: var(--gold-accent);
 }
