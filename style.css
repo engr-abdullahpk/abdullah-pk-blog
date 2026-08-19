@@ -1,90 +1,55 @@
-:root {
-  --header-bg: #2b1d0c;
-  --gold-accent: #d4af37;
-  --paper-bg: #f4e4bc;
-  --ink-color: #2c1a0e;
-}
-
-body {
-  margin: 0;
-  padding: 0;
-  background-color: #1a0f07;
-  color: var(--ink-color);
-  font-family: 'MedievalSharp', cursive;
-}
-
-/* Fixed Header & Aligned Footer */
-.header-container {
+/* Modals */
+.modal {
   position: fixed;
   top: 0;
+  left: 0;
   width: 100%;
-  height: 60px;
-  background: var(--header-bg);
-  border-bottom: 2px solid var(--gold-accent);
-  z-index: 1000;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.85);
   display: flex;
   justify-content: center;
-}
-
-.header-content, .footer-content {
-  width: 90%;
-  max-width: 1000px;
-  display: flex;
-  justify-content: space-between;
   align-items: center;
+  z-index: 2000;
 }
 
-.footer-container {
-  width: 100%;
-  height: 50px;
-  background: var(--header-bg);
-  border-top: 2px solid var(--gold-accent);
-  display: flex;
-  justify-content: center;
-  color: var(--gold-accent);
+.modal-content.parchment {
+  background: #f4e4bc;
+  border: 2px solid #8b5a2b;
+  padding: 30px;
+  width: 90%;
+  max-width: 450px;
+  box-shadow: 0 0 20px rgba(0,0,0,0.8);
+  border-radius: 4px;
+  position: relative;
 }
 
-.main-container {
-  margin-top: 80px;
-  margin-bottom: 60px;
-  display: flex;
-  justify-content: center;
-  perspective: 1000px; /* Enables 3D page flip effect */
-}
-
-/* Damaged Old Page / Parchment Effect */
-.post-card {
-  background: var(--paper-bg);
-  background-image: radial-gradient(#e2c992 10%, transparent 11%);
-  background-size: 10px 10px;
-  border: 1px solid #b89b5e;
-  box-shadow: inset 0 0 30px rgba(0,0,0,0.5), 5px 5px 15px rgba(0,0,0,0.7);
-  padding: 25px;
-  margin-bottom: 20px;
-  border-radius: 5px;
-  font-family: 'Tangerine', cursive;
-  font-size: 1.8rem;
-  transform-origin: left center;
-  transition: transform 0.8s ease-in-out;
-}
-
-/* Opening animation */
-.post-card.open {
-  transform: rotateY(-180deg);
-  opacity: 0;
-}
-
-.post-title {
-  font-family: 'Great Vibes', cursive;
-  font-size: 2.5rem;
-  margin-top: 0;
-}
-
-button {
-  background: var(--header-bg);
-  color: var(--gold-accent);
-  border: 1px solid var(--gold-accent);
-  padding: 5px 15px;
+.close-btn {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  font-size: 24px;
   cursor: pointer;
+  color: #2b1d0c;
+}
+
+.modal input, .modal textarea {
+  width: 100%;
+  margin: 8px 0;
+  padding: 10px;
+  background: #e6d3a3;
+  border: 1px solid #8b5a2b;
   font-family: 'MedievalSharp', cursive;
+  box-sizing: border-box;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* Header & Footer Layout Alignment */
+.header-content, .footer-content {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 20px;
 }

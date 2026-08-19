@@ -1,40 +1,86 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getAuth } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { getFirestore, collection, getDocs, limit, query } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { 
+  createUserWithEmailAndPassword, 
+  signInWithEmailAndPassword, 
+  RecaptchaVerifier, 
+  signInWithPhoneNumber 
+} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-// Paste your configuration details from Firebase here
-const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+// Modal Toggles
+window.toggleAuthModal = () => {
+  document.getElementById("authModal").classList.toggle("hidden");
 };
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+window.togglePostModal = () => {
+  document.getElementById("postModal").classList.toggle("hidden");
+};
 
-// Download post as PDF function
-window.downloadPDF = function(title, body, author, date) {
-  const element = document.createElement('div');
-  element.style.padding = '20px';
-  element.style.fontFamily = 'Georgia, serif';
-  element.innerHTML = `
-    <h1 style="text-align: center;">${title}</h1>
-    <p><strong>Author:</strong> ${author} | <strong>Date:</strong> ${date}</p>
-    <hr>
-    <div>${body}</div>
-  `;
+window.openNewPostModal = () => {
+  document.getElementById("postModal").classList.remove("hidden");
+};
 
-  const opt = {
-    margin:       1,
-    filename:     `${title}.pdf`,
-    image:        { type: 'jpeg', quality: 0.98 },
-    html2canvas:  { scale: 2 },
-    jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
-  };
+// Email Sign Up
+window.handleEmailSignUp = async () => {
+  const email = document.getElementById("authEmail").value;
+  const password = document.getElementById("authPassword").value;
+  try {
+    await createUserWithEmailAndPassword(auth, email, password);
+    alert("Account created!");
+    window.toggleAuthModal();
+  } catch (err) {
+    alert("Sign Up Error: " + err.message);
+  }
+};
 
-  html2pdf().set(opt).from(element).save();
+// Email Sign In
+window.handleEmailSignIn = async () => {
+  const email = document.getElementById("authEmail").value;
+  const password = document.getElementById("authPassword").value;
+  try {
+    await signInWithEmailAndPassword(auth, email, password);
+    alert("Signed in successfully!");
+    window.toggleAuthModal();
+  } catch (err) {
+    alert("Sign In Error: " + err.message);
+  }
+};
+
+// Phone / OTP Verification Setup
+let confirmationResultGlobal = null;
+
+window.handleSendOTP = async () => {
+  const phoneNumber = document.getElementById("phoneNumber").value;
+  if (!phoneNumber) return alert("Enter a phone number with country code.");
+
+  window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', { 'size': 'invisible' });
+
+  try {
+    confirmationResultGlobal = await signInWithPhoneNumber(auth, phoneNumber, window.recaptchaVerifier);
+    document.getElementById("otpSection").classList.remove("hidden");
+    alert("OTP Sent to " + phoneNumber);
+  } catch (err) {
+    alert("OTP Send Error: " + err.message);
+  }
+};
+
+window.handleVerifyOTP = async () => {
+  const code = document.getElementById("otpCode").value;
+  try {
+    await confirmationResultGlobal.confirm(code);
+    alert("Phone Verified and Logged In!");
+    window.toggleAuthModal();
+  } catch (err) {
+    alert("Invalid OTP code: " + err.message);
+  }
+};
+
+// New Post Submission handler
+window.submitNewPost = () => {
+  const title = document.getElementById("newPostTitle").value;
+  const body = document.getElementById("newPostBody").value;
+  if (!title || !body) return alert("Fill in both title and manuscript body.");
+
+  window.createPost(title, body);
+  document.getElementById("newPostTitle").value = "";
+  document.getElementById("newPostBody").value = "";
+  window.togglePostModal();
 };
