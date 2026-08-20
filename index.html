@@ -5,58 +5,80 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Abdullah Pk's Blog</title>
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=MedievalSharp&family=Tangerine:wght@700&display=swap">
+  <!-- html2pdf Library for PDF export -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body>
-
-  <!-- Fixed Header -->
-  <header class="header-container">
-    <div class="header-content">
-      <h1 class="logo">Abdullah Pk's Blog</h1>
-      <nav id="navLinks">
-        <!-- Dynamically rendered via app.js -->
-      </nav>
-    </div>
+  <header class="site-header">
+    <div class="logo" onclick="window.location.reload()">Abdullah's Archives</div>
+    <input type="text" id="searchInput" placeholder="Search manuscripts..." oninput="window.handleSearch()">
+    <nav id="navLinks"></nav>
   </header>
 
-  <!-- Main Content Container -->
-  <main class="main-container">
-    <div class="book-cover-frame">
-      <div class="page-container" id="postsContainer">
-        <!-- Blog posts load here dynamically -->
-      </div>
-      <div class="pagination" id="paginationControls"></div>
-    </div>
+  <main class="container">
+    <section id="postsContainer" class="posts-grid"></section>
   </main>
 
-  <!-- Fixed Footer -->
-  <footer class="footer-container">
-    <div class="footer-content">
-      <p>&copy; 2026 Abdullah Pk's Blog. Preserved in Antiquity.</p>
-    </div>
-  </footer>
-
-  <!-- Scribe Auth Modal -->
+  <!-- Auth Modal -->
   <div id="authModal" class="modal hidden">
-    <div class="modal-content parchment">
-      <span class="close-btn" onclick="window.toggleAuthModal()">&times;</span>
-      <h2>Scribe Authentication</h2>
-      <input type="email" id="authEmail" placeholder="Email Address">
+    <div class="modal-content">
+      <h2>Scribe Access</h2>
+      <input type="email" id="authEmail" placeholder="Email">
       <input type="password" id="authPassword" placeholder="Password">
-      <button onclick="window.handleRegister()">Register</button>
-      <button onclick="window.handleLogin()">Sign In</button>
+      <div class="modal-actions">
+        <button onclick="window.handleLogin()">Login</button>
+        <button onclick="window.handleRegister()">Register</button>
+        <button onclick="window.toggleAuthModal()">Close</button>
+      </div>
     </div>
   </div>
 
-  <!-- Write Manuscript Modal -->
+  <!-- Write / Edit Modal -->
   <div id="writeModal" class="modal hidden">
-    <div class="modal-content parchment">
-      <span class="close-btn" onclick="window.toggleWriteModal()">&times;</span>
-      <h2>Write New Manuscript</h2>
-      <input type="text" id="postTitle" placeholder="Manuscript Title">
-      <textarea id="postBody" rows="6" placeholder="Inscribe your thoughts..."></textarea>
-      <button onclick="window.handlePublish()">Publish Manuscript</button>
+    <div class="modal-content">
+      <h2 id="writeModalTitle">Inscribe Manuscript</h2>
+      <input type="hidden" id="editingPostId">
+      <input type="text" id="postTitle" placeholder="Title">
+      <input type="file" id="postImage" accept="image/*">
+      <textarea id="postBody" placeholder="Write your manuscript here..."></textarea>
+      <div class="modal-actions">
+        <button onclick="window.handlePublish()">Publish</button>
+        <button onclick="window.toggleWriteModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Profile Modal -->
+  <div id="profileModal" class="modal hidden">
+    <div class="modal-content">
+      <h2>Scribe Profile</h2>
+      <p><strong>Email:</strong> <span id="profileEmail"></span></p>
+      <p><strong>Manuscripts Inscribed:</strong> <span id="profilePostCount">0</span></p>
+      <button onclick="window.toggleProfileModal()">Close</button>
+    </div>
+  </div>
+
+  <!-- Read More / Book Expanded Modal -->
+  <div id="readMoreModal" class="modal hidden">
+    <div class="modal-content parchment-expanded" id="pdfContent">
+      <h2 id="readTitle"></h2>
+      <div id="readMeta" class="post-meta"></div>
+      <div id="readImageContainer"></div>
+      <div id="readBody" class="post-body-full"></div>
+      
+      <div class="pdf-action">
+        <button onclick="window.downloadPDF()">Download PDF</button>
+      </div>
+
+      <hr>
+      <h3>Comments</h3>
+      <div id="commentsContainer"></div>
+      <div class="comment-input-group">
+        <input type="text" id="commentInput" placeholder="Leave a comment...">
+        <button onclick="window.handleAddComment()">Post</button>
+      </div>
+      <br>
+      <button onclick="window.toggleReadMoreModal()">Close</button>
     </div>
   </div>
 

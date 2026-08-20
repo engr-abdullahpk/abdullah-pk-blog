@@ -1,24 +1,14 @@
-console.log("App script initialized successfully!");
-
-// 1. Firebase Module Imports
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { 
-  getAuth, 
-  createUserWithEmailAndPassword, 
-  signInWithEmailAndPassword, 
-  signOut, 
-  onAuthStateChanged 
+  getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged 
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { 
-  getFirestore, 
-  collection, 
-  addDoc, 
-  getDocs, 
-  query, 
-  orderBy 
+  getFirestore, collection, addDoc, getDocs, doc, deleteDoc, updateDoc, query, orderBy 
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { 
+  getStorage, ref, uploadBytes, getDownloadURL 
+} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
-// 2. Firebase Configuration
 const firebaseConfig = {
   apiKey: "AIzaSyAbICAoF4wtt8WAuH_vlpiSALDrhAs18_U",
   authDomain: "abdullah-pk-s-blog.firebaseapp.com",
@@ -28,145 +18,201 @@ const firebaseConfig = {
   appId: "1:244124472259:web:65de32f9caf1e38812e376"
 };
 
-// 3. Initialize Firebase, Auth, & Firestore
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+const storage = getStorage(app);
 
-// 4. Global Window Modal Handlers
-window.toggleAuthModal = function() {
-  const modal = document.getElementById("authModal");
-  if (modal) modal.classList.toggle("hidden");
-};
+let allPosts = [];
+let currentActivePostId = null;
 
-window.toggleWriteModal = function() {
-  const modal = document.getElementById("writeModal");
-  if (modal) modal.classList.toggle("hidden");
-};
-
-// 5. Authentication Handlers
-window.handleRegister = async function() {
-  const email = document.getElementById("authEmail").value;
-  const password = document.getElementById("authPassword").value;
-  if (!email || !password) return alert("Please fill in all fields.");
-
-  try {
-    await createUserWithEmailAndPassword(auth, email, password);
-    alert("Account created successfully!");
-    window.toggleAuthModal();
-  } catch (error) {
-    alert(`Registration Error: ${error.message}`);
-  }
-};
-
-window.handleLogin = async function() {
-  const email = document.getElementById("authEmail").value;
-  const password = document.getElementById("authPassword").value;
-  if (!email || !password) return alert("Please fill in all fields.");
-
-  try {
-    await signInWithEmailAndPassword(auth, email, password);
-    alert("Signed in successfully!");
-    window.toggleAuthModal();
-  } catch (error) {
-    alert(`Login Error: ${error.message}`);
-  }
-};
-
-window.handleLogout = async function() {
-  try {
-    await signOut(auth);
-    alert("Signed out successfully.");
-  } catch (error) {
-    alert(`Sign Out Error: ${error.message}`);
-  }
-};
-
-// 6. Save Manuscript to Firestore
-window.handlePublish = async function() {
-  const title = document.getElementById("postTitle").value;
-  const body = document.getElementById("postBody").value;
-  if (!title || !body) return alert("Please fill out both the title and manuscript body.");
-
-  const currentUser = auth.currentUser;
-  const authorName = currentUser ? currentUser.email : "Anonymous Scribe";
-
-  try {
-    await addDoc(collection(db, "posts"), {
-      title: title,
-      content: body,
-      author: authorName,
-      createdAt: new Date()
-    });
-
+// Modal Toggles
+window.toggleAuthModal = () => document.getElementById("authModal").classList.toggle("hidden");
+window.toggleProfileModal = () => document.getElementById("profileModal").classList.toggle("hidden");
+window.toggleReadMoreModal = () => document.getElementById("readMoreModal").classList.toggle("hidden");
+window.toggleWriteModal = (reset = true) => {
+  if (reset) {
+    document.getElementById("editingPostId").value = "";
     document.getElementById("postTitle").value = "";
     document.getElementById("postBody").value = "";
+    document.getElementById("writeModalTitle").innerText = "Inscribe Manuscript";
+  }
+  document.getElementById("writeModal").classList.toggle("hidden");
+};
+
+// Auth Actions
+window.handleRegister = async () => {
+  const e = document.getElementById("authEmail").value, p = document.getElementById("authPassword").value;
+  try { await createUserWithEmailAndPassword(auth, e, p); window.toggleAuthModal(); } catch (err) { alert(err.message); }
+};
+window.handleLogin = async () => {
+  const e = document.getElementById("authEmail").value, p = document.getElementById("authPassword").value;
+  try { await signInWithEmailAndPassword(auth, e, p); window.toggleAuthModal(); } catch (err) { alert(err.message); }
+};
+window.handleLogout = async () => { await signOut(auth); };
+
+// Profile Section
+window.openProfile = () => {
+  const user = auth.currentUser;
+  if (!user) return;
+  document.getElementById("profileEmail").innerText = user.email;
+  const count = allPosts.filter(p => p.author === user.email).length;
+  document.getElementById("profilePostCount").innerText = count;
+  window.toggleProfileModal();
+};
+
+// Publish / Edit Post with Image Upload
+window.handlePublish = async () => {
+  const title = document.getElementById("postTitle").value;
+  const body = document.getElementById("postBody").value;
+  const editId = document.getElementById("editingPostId").value;
+  const fileInput = document.getElementById("postImage");
+  const user = auth.currentUser;
+
+  if (!title || !body) return alert("Fill in title and body.");
+
+  try {
+    let imageUrl = "";
+    if (fileInput.files[0]) {
+      const file = fileInput.files[0];
+      const storageRef = ref(storage, `images/${Date.now()}_${file.name}`);
+      const snapshot = await uploadBytes(storageRef, file);
+      imageUrl = await getDownloadURL(snapshot.ref);
+    }
+
+    if (editId) {
+      const docData = { title, content: body };
+      if (imageUrl) docData.imageUrl = imageUrl;
+      await updateDoc(doc(db, "posts", editId), docData);
+    } else {
+      await addDoc(collection(db, "posts"), {
+        title, content: body, author: user ? user.email : "Anonymous Scribe",
+        createdAt: new Date(), imageUrl
+      });
+    }
+
     window.toggleWriteModal();
     loadPosts();
-  } catch (error) {
-    alert(`Publishing Error: ${error.message}`);
+  } catch (err) { alert(err.message); }
+};
+
+// Delete Post
+window.handleDelete = async (id) => {
+  if (confirm("Are you sure you want to delete this manuscript?")) {
+    await deleteDoc(doc(db, "posts", id));
+    loadPosts();
   }
 };
 
-// 7. Dynamic Navigation UI
-function renderNav(isLoggedIn = false) {
-  const nav = document.getElementById("navLinks");
-  if (!nav) return;
+// Edit Modal Setup
+window.handleEdit = (id) => {
+  const post = allPosts.find(p => p.id === id);
+  if (!post) return;
+  document.getElementById("editingPostId").value = id;
+  document.getElementById("postTitle").value = post.title;
+  document.getElementById("postBody").value = post.content;
+  document.getElementById("writeModalTitle").innerText = "Edit Manuscript";
+  window.toggleWriteModal(false);
+};
 
-  if (isLoggedIn) {
-    nav.innerHTML = `
-      <button onclick="window.toggleWriteModal()">Write Manuscript</button>
-      <button onclick="window.handleLogout()">Sign Out</button>
-    `;
-  } else {
-    nav.innerHTML = `
-      <button onclick="window.toggleAuthModal()">Scribe Login</button>
-    `;
-  }
+// Search Filter
+window.handleSearch = () => {
+  const term = document.getElementById("searchInput").value.toLowerCase();
+  const filtered = allPosts.filter(p => 
+    p.title.toLowerCase().includes(term) || p.content.toLowerCase().includes(term)
+  );
+  renderPosts(filtered);
+};
+
+// Read More & PDF Export
+window.openReadMore = async (id) => {
+  currentActivePostId = id;
+  const post = allPosts.find(p => p.id === id);
+  if (!post) return;
+
+  document.getElementById("readTitle").innerText = post.title;
+  document.getElementById("readMeta").innerText = `Inscribed by ${post.author}`;
+  document.getElementById("readBody").innerText = post.content;
+  document.getElementById("readImageContainer").innerHTML = post.imageUrl 
+    ? `<img src="${post.imageUrl}" style="max-width:100%; margin:10px 0;">` : "";
+
+  await loadComments(id);
+  window.toggleReadMoreModal();
+};
+
+window.downloadPDF = () => {
+  const element = document.getElementById("pdfContent");
+  html2pdf().from(element).save("manuscript.pdf");
+};
+
+// Comments Management
+async function loadComments(postId) {
+  const container = document.getElementById("commentsContainer");
+  container.innerHTML = "Loading comments...";
+  const q = query(collection(db, `posts/${postId}/comments`), orderBy("createdAt", "asc"));
+  const snap = await getDocs(q);
+  
+  let html = "";
+  snap.forEach(d => {
+    const c = d.data();
+    html += `<div class="comment-item"><strong>${c.author}:</strong> ${c.text}</div>`;
+  });
+  container.innerHTML = html || "<p>No comments yet.</p>";
 }
 
-// 8. Load Posts Live from Firestore
-async function loadPosts() {
+window.handleAddComment = async () => {
+  const text = document.getElementById("commentInput").value;
+  const user = auth.currentUser;
+  if (!text) return;
+
+  await addDoc(collection(db, `posts/${currentActivePostId}/comments`), {
+    text, author: user ? user.email : "Anonymous", createdAt: new Date()
+  });
+  document.getElementById("commentInput").value = "";
+  loadComments(currentActivePostId);
+};
+
+// Render Functions
+function renderPosts(posts) {
   const container = document.getElementById("postsContainer");
-  if (!container) return;
-
-  try {
-    const postsQuery = query(collection(db, "posts"), orderBy("createdAt", "desc"));
-    const querySnapshot = await getDocs(postsQuery);
-    
-    if (querySnapshot.empty) {
-      container.innerHTML = `<p style="text-align:center; color: #d4af37;">No manuscripts found in the archives yet.</p>`;
-      return;
-    }
-
-    let postsHTML = "";
-    querySnapshot.forEach((doc) => {
-      const post = doc.data();
-      const dateString = post.createdAt 
-        ? new Date(post.createdAt.toDate()).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) 
-        : "Ancient Date";
-      
-      postsHTML += `
-        <article class="post-card">
-          <h2 class="post-title">${post.title}</h2>
-          <div class="post-meta">Inscribed by ${post.author} on ${dateString}</div>
-          <div class="post-body-full">${post.content}</div>
-        </article>
-      `;
-    });
-
-    container.innerHTML = postsHTML;
-  } catch (error) {
-    console.error("Error loading posts:", error);
+  if (!posts.length) {
+    container.innerHTML = "<p>No manuscripts found.</p>";
+    return;
   }
+
+  const user = auth.currentUser;
+  container.innerHTML = posts.map(p => `
+    <article class="book-card">
+      ${p.imageUrl ? `<img src="${p.imageUrl}" class="book-cover-img">` : ""}
+      <h3>${p.title}</h3>
+      <p class="post-meta">By ${p.author}</p>
+      <p>${p.content.substring(0, 100)}...</p>
+      <button class="read-more-btn" onclick="window.openReadMore('${p.id}')">Read More</button>
+      ${user && user.email === p.author ? `
+        <button class="action-btn" onclick="window.handleEdit('${p.id}')">Edit</button>
+        <button class="action-btn" onclick="window.handleDelete('${p.id}')">Delete</button>
+      ` : ""}
+    </article>
+  `).join("");
 }
 
-// 9. Auth State Listener
-onAuthStateChanged(auth, (user) => {
-  renderNav(!!user);
-});
+async function loadPosts() {
+  const q = query(collection(db, "posts"), orderBy("createdAt", "desc"));
+  const snap = await getDocs(q);
+  allPosts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  renderPosts(allPosts);
+}
 
-// 10. Application Initialization
-document.addEventListener("DOMContentLoaded", () => {
+function renderNav(user) {
+  const nav = document.getElementById("navLinks");
+  nav.innerHTML = user ? `
+    <button onclick="window.openProfile()">Profile</button>
+    <button onclick="window.toggleWriteModal()">Write</button>
+    <button onclick="window.handleLogout()">Sign Out</button>
+  ` : `<button onclick="window.toggleAuthModal()">Scribe Login</button>`;
+}
+
+onAuthStateChanged(auth, (user) => {
+  renderNav(user);
   loadPosts();
 });
