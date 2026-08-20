@@ -5,80 +5,150 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Abdullah Pk's Blog</title>
   <link rel="stylesheet" href="style.css">
-  <!-- html2pdf Library for PDF export -->
+  <!-- Fonts: Vintage Calligraphic Header & Reading Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=UnifrakturMaguntia&family=IM+Fell+English+SC&family=MedievalSharp&display=swap" rel="stylesheet">
+  <!-- html2pdf Library for A4 Export -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body>
+
+  <!-- Fixed Minimal Header styled like an Old Leather Book Spine -->
   <header class="site-header">
-    <div class="logo" onclick="window.location.reload()">Abdullah's Archives</div>
-    <input type="text" id="searchInput" placeholder="Search manuscripts..." oninput="window.handleSearch()">
-    <nav id="navLinks"></nav>
+    <div class="header-inner">
+      <div class="logo" onclick="window.location.reload()">Abdullah Pk's Blog</div>
+      <div class="search-box">
+        <input type="text" id="searchInput" placeholder="Search archives..." oninput="window.handleSearch()">
+      </div>
+      <nav id="navLinks"></nav>
+    </div>
   </header>
 
+  <!-- Main Content Layout -->
   <main class="container">
     <section id="postsContainer" class="posts-grid"></section>
+    
+    <!-- Antique Pagination Controls -->
+    <div class="pagination-container">
+      <button id="prevBtn" onclick="window.changePage(-1)">&#10094; Previous Manuscripts</button>
+      <span id="pageIndicator">Page 1</span>
+      <button id="nextBtn" onclick="window.changePage(1)">Next Manuscripts &#10095;</button>
+    </div>
   </main>
 
-  <!-- Auth Modal -->
+  <!-- Fixed Minimal Footer -->
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <p>&copy; 2026 Abdullah Pk's Blog. Inscribed on Ancient Digital Parchment.</p>
+    </div>
+  </footer>
+
+  <!-- Auth Modal (Email/Password or Phone OTP) -->
   <div id="authModal" class="modal hidden">
-    <div class="modal-content">
+    <div class="modal-content parchment-bg">
+      <span class="close-btn" onclick="window.toggleAuthModal()">&times;</span>
       <h2>Scribe Access</h2>
-      <input type="email" id="authEmail" placeholder="Email">
-      <input type="password" id="authPassword" placeholder="Password">
-      <div class="modal-actions">
-        <button onclick="window.handleLogin()">Login</button>
-        <button onclick="window.handleRegister()">Register</button>
-        <button onclick="window.toggleAuthModal()">Close</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Write / Edit Modal -->
-  <div id="writeModal" class="modal hidden">
-    <div class="modal-content">
-      <h2 id="writeModalTitle">Inscribe Manuscript</h2>
-      <input type="hidden" id="editingPostId">
-      <input type="text" id="postTitle" placeholder="Title">
-      <input type="file" id="postImage" accept="image/*">
-      <textarea id="postBody" placeholder="Write your manuscript here..."></textarea>
-      <div class="modal-actions">
-        <button onclick="window.handlePublish()">Publish</button>
-        <button onclick="window.toggleWriteModal()">Cancel</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Profile Modal -->
-  <div id="profileModal" class="modal hidden">
-    <div class="modal-content">
-      <h2>Scribe Profile</h2>
-      <p><strong>Email:</strong> <span id="profileEmail"></span></p>
-      <p><strong>Manuscripts Inscribed:</strong> <span id="profilePostCount">0</span></p>
-      <button onclick="window.toggleProfileModal()">Close</button>
-    </div>
-  </div>
-
-  <!-- Read More / Book Expanded Modal -->
-  <div id="readMoreModal" class="modal hidden">
-    <div class="modal-content parchment-expanded" id="pdfContent">
-      <h2 id="readTitle"></h2>
-      <div id="readMeta" class="post-meta"></div>
-      <div id="readImageContainer"></div>
-      <div id="readBody" class="post-body-full"></div>
       
-      <div class="pdf-action">
-        <button onclick="window.downloadPDF()">Download PDF</button>
+      <div class="auth-tabs">
+        <button id="emailTabBtn" class="active" onclick="window.switchAuthTab('email')">Email/Password</button>
+        <button id="phoneTabBtn" onclick="window.switchAuthTab('phone')">Phone OTP</button>
       </div>
 
-      <hr>
-      <h3>Comments</h3>
-      <div id="commentsContainer"></div>
-      <div class="comment-input-group">
-        <input type="text" id="commentInput" placeholder="Leave a comment...">
-        <button onclick="window.handleAddComment()">Post</button>
+      <!-- Email Auth Form -->
+      <div id="emailAuthSection">
+        <input type="email" id="authEmail" placeholder="Scribe Email">
+        <input type="password" id="authPassword" placeholder="Secret Password">
+        <div class="modal-actions">
+          <button onclick="window.handleEmailLogin()">Sign In</button>
+          <button onclick="window.handleEmailRegister()">Sign Up</button>
+        </div>
       </div>
-      <br>
-      <button onclick="window.toggleReadMoreModal()">Close</button>
+
+      <!-- Phone Auth Form with OTP -->
+      <div id="phoneAuthSection" class="hidden">
+        <input type="tel" id="authPhone" placeholder="+8801700000000">
+        <div id="recaptcha-container"></div>
+        <button id="sendOtpBtn" onclick="window.handleSendOTP()">Send Verification Code</button>
+        
+        <div id="otpInputGroup" class="hidden" style="margin-top: 10px;">
+          <input type="text" id="authOtp" placeholder="Enter 6-digit OTP">
+          <button onclick="window.handleVerifyOTP()">Verify & Access</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Write/Edit Manuscript Modal -->
+  <div id="writeModal" class="modal hidden">
+    <div class="modal-content parchment-bg">
+      <span class="close-btn" onclick="window.toggleWriteModal()">&times;</span>
+      <h2 id="writeModalTitle">Inscribe New Manuscript</h2>
+      <input type="hidden" id="editingPostId">
+      <input type="text" id="postTitle" placeholder="Manuscript Title...">
+      <input type="file" id="postImage" accept="image/*">
+      <textarea id="postBody" placeholder="Inscribe your thoughts on parchment..."></textarea>
+      <div class="modal-actions">
+        <button onclick="window.handlePublish()">Publish to Archives</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- User Profile Section -->
+  <div id="profileModal" class="modal hidden">
+    <div class="modal-content parchment-bg">
+      <span class="close-btn" onclick="window.toggleProfileModal()">&times;</span>
+      <h2>Scribe Profile</h2>
+      <p><strong>Identity:</strong> <span id="profileUserDetail"></span></p>
+      <hr style="margin: 10px 0; border-color: #8b5a2b;">
+      <h3>Your Inscribed Manuscripts</h3>
+      <div id="userPostsContainer" class="user-posts-list"></div>
+    </div>
+  </div>
+
+  <!-- Book Opening Expansion Modal -->
+  <div id="bookModal" class="modal hidden">
+    <div class="book-viewport">
+      <div class="book-3d" id="bookElement">
+        <!-- Left Page Cover (Flips Open) -->
+        <div class="book-cover-left">
+          <div class="cover-title" id="coverTitleDisplay">Manuscript</div>
+        </div>
+        
+        <!-- Right Page (Content Parchment) -->
+        <div class="book-page-right parchment-bg">
+          <span class="close-btn" onclick="window.closeBookModal()">&times;</span>
+          <div id="printableArea">
+            <h1 id="readTitle" class="manuscript-title"></h1>
+            <div id="readMeta" class="manuscript-meta"></div>
+            <div id="readImageContainer"></div>
+            <div id="readBody" class="manuscript-body"></div>
+          </div>
+
+          <!-- Download PDF Button (Visible for signed-in users) -->
+          <div id="pdfDownloadSection" class="hidden" style="margin-top: 15px;">
+            <button class="pdf-btn" onclick="window.downloadPDF()">Download as PDF Manuscript</button>
+          </div>
+
+          <!-- Reactions Section -->
+          <div class="reactions-section">
+            <button onclick="window.handleReaction('quill')">🖋️ <span id="reactQuillCount">0</span></button>
+            <button onclick="window.handleReaction('candle')">🕯️ <span id="reactCandleCount">0</span></button>
+            <button onclick="window.handleReaction('scroll')">📜 <span id="reactScrollCount">0</span></button>
+          </div>
+
+          <!-- Comments Section -->
+          <div class="comments-section">
+            <h3>Reader Transcriptions</h3>
+            <div id="commentsContainer"></div>
+            <div id="commentFormSection" class="hidden">
+              <input type="text" id="commentInput" placeholder="Write a comment...">
+              <button onclick="window.handleAddComment()">Inscribe Comment</button>
+            </div>
+            <p id="commentSignInNotice" class="login-notice">Please sign in to react or leave comments.</p>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
