@@ -10,7 +10,7 @@ body {
   background-image: radial-gradient(#2d1f18 1px, transparent 0);
   background-size: 20px 20px;
   color: #2b1d0c;
-  padding-top: 70px;
+  padding-top: 75px;
   padding-bottom: 60px;
   min-height: 100vh;
 }
@@ -21,7 +21,7 @@ body {
   top: 0;
   left: 0;
   width: 100%;
-  height: 55px;
+  height: 60px;
   background: #2b1810;
   border-bottom: 3px solid #8b5a2b;
   box-shadow: 0 4px 15px rgba(0,0,0,0.8);
@@ -32,18 +32,19 @@ body {
 
 .header-inner, .footer-inner {
   width: 100%;
-  max-width: 1100px;
+  max-width: 1440px;
   height: 100%;
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 0 20px;
+  margin: 0 auto;
 }
 
 .logo {
   font-family: 'Cinzel Decorative', serif;
   color: #d4af37;
-  font-size: 1.3rem;
+  font-size: 1.4rem;
   font-weight: bold;
   cursor: pointer;
 }
@@ -52,20 +53,35 @@ body {
   background: #3d261a;
   border: 1px solid #8b5a2b;
   color: #f3e5ab;
-  padding: 5px 12px;
+  padding: 6px 14px;
   border-radius: 4px;
   font-family: 'MedievalSharp', serif;
+  width: 250px;
 }
 
 #navLinks button {
   background: #8b5a2b;
   color: #f3e5ab;
   border: 1px solid #d4af37;
-  padding: 5px 12px;
-  margin-left: 6px;
+  padding: 6px 14px;
+  margin-left: 8px;
   cursor: pointer;
   border-radius: 3px;
   font-family: 'MedievalSharp', serif;
+}
+
+/* Main Container - Center Aligned & 1440px Maximum Width */
+.container {
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.posts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 25px;
 }
 
 /* Parchment Textures */
@@ -77,37 +93,139 @@ body {
   border-radius: 2px;
 }
 
-/* Grid & Cards */
-.container { max-width: 1100px; margin: 20px auto; padding: 0 15px; }
-.posts-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 25px; }
-
 .post-card {
   padding: 20px;
-  min-height: 250px;
+  min-height: 280px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
 }
 
-.post-card h3 { font-family: 'UnifrakturMaguntia', cursive; font-size: 1.5rem; color: #4a2c11; }
-.see-more-btn { background: #5c3a21; color: #f3e5ab; border: none; padding: 8px 15px; cursor: pointer; }
+.post-card h3 {
+  font-family: 'UnifrakturMaguntia', cursive;
+  font-size: 1.6rem;
+  color: #4a2c11;
+  margin-bottom: 8px;
+}
+
+/* User Profile Badge for Posts and Comments */
+.author-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.author-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid #8b5a2b;
+  object-fit: cover;
+  background: #2b1810;
+}
+
+.author-name {
+  font-weight: bold;
+  color: #5c3a21;
+  font-size: 0.95rem;
+}
+
+.post-card-snippet {
+  font-size: 0.95rem;
+  line-height: 1.4;
+  color: #3b2413;
+  margin-bottom: 15px;
+}
+
+.see-more-btn {
+  background: #5c3a21;
+  color: #f3e5ab;
+  border: none;
+  padding: 8px 15px;
+  cursor: pointer;
+  align-self: flex-start;
+  font-family: 'MedievalSharp', serif;
+}
 
 /* Pagination */
-.pagination-container { display: flex; justify-content: center; align-items: center; margin: 30px 0; gap: 15px; }
-.pagination-container button { background: #2b1810; color: #d4af37; border: 1px solid #8b5a2b; padding: 8px 16px; cursor: pointer; }
+.pagination-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 35px 0;
+  gap: 15px;
+}
+
+.pagination-container button {
+  background: #2b1810;
+  color: #d4af37;
+  border: 1px solid #8b5a2b;
+  padding: 8px 16px;
+  cursor: pointer;
+}
+
 #pageIndicator { color: #d4af37; }
 
-.site-footer { position: fixed; bottom: 0; left: 0; width: 100%; height: 45px; background: #2b1810; border-top: 2px solid #8b5a2b; color: #a66d3b; display: flex; justify-content: center; font-size: 0.85rem; z-index: 900; }
+.site-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 45px;
+  background: #2b1810;
+  border-top: 2px solid #8b5a2b;
+  color: #a66d3b;
+  display: flex;
+  justify-content: center;
+  font-size: 0.85rem;
+  z-index: 900;
+}
 
 /* Modals */
 .hidden { display: none !important; }
-.modal { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); display: flex; justify-content: center; align-items: center; z-index: 1000; }
-.modal-content { width: 90%; max-width: 500px; padding: 25px; max-height: 85vh; overflow-y: auto; position: relative; }
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0,0,0,0.85);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  width: 90%;
+  max-width: 500px;
+  padding: 25px;
+  max-height: 85vh;
+  overflow-y: auto;
+  position: relative;
+}
+
 .wide-modal { max-width: 750px; }
-.close-btn { position: absolute; top: 10px; right: 15px; font-size: 1.8rem; cursor: pointer; color: #5c3a21; z-index: 10; }
+
+.close-btn {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  font-size: 1.8rem;
+  cursor: pointer;
+  color: #5c3a21;
+  z-index: 10;
+}
 
 .modal-content input, .modal-content textarea, .modal-content select {
-  width: 100%; padding: 8px; margin: 6px 0; background: rgba(255,255,255,0.6); border: 1px solid #8b5a2b; font-family: 'MedievalSharp', serif;
+  width: 100%;
+  padding: 8px;
+  margin: 6px 0;
+  background: rgba(255,255,255,0.6);
+  border: 1px solid #8b5a2b;
+  font-family: 'MedievalSharp', serif;
 }
 
 .auth-options { margin: 8px 0; text-align: right; }
@@ -118,20 +236,42 @@ body {
 .avatar-img { width: 80px; height: 80px; border-radius: 50%; border: 3px solid #8b5a2b; object-fit: cover; background-color: #2b1810; }
 .profile-edit-form { display: flex; flex-direction: column; gap: 6px; }
 
-/* Toolbar */
+/* Editor */
 .editor-toolbar {
-  display: flex; flex-wrap: wrap; gap: 4px; background: #e0cca7; padding: 6px; border: 1px solid #8b5a2b; margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  background: #e0cca7;
+  padding: 6px;
+  border: 1px solid #8b5a2b;
+  margin-top: 10px;
 }
+
 .editor-toolbar select, .editor-toolbar button, .editor-toolbar input {
-  width: auto; margin: 0; padding: 4px 8px; background: #f1e2c3; border: 1px solid #8b5a2b; cursor: pointer; font-size: 0.85rem;
+  width: auto;
+  margin: 0;
+  padding: 4px 8px;
+  background: #f1e2c3;
+  border: 1px solid #8b5a2b;
+  cursor: pointer;
+  font-size: 0.85rem;
 }
+
 .editor-content {
-  min-height: 180px; max-height: 300px; overflow-y: auto; background: rgba(255,255,255,0.7); border: 1px solid #8b5a2b; padding: 10px; margin-top: 5px; outline: none;
+  min-height: 180px;
+  max-height: 300px;
+  overflow-y: auto;
+  background: rgba(255,255,255,0.7);
+  border: 1px solid #8b5a2b;
+  padding: 10px;
+  margin-top: 5px;
+  outline: none;
 }
+
 .editor-content table { border-collapse: collapse; width: 100%; margin: 8px 0; }
 .editor-content table, .editor-content th, .editor-content td { border: 1px solid #8b5a2b; padding: 6px; }
 
-/* Fullscreen 3D Book Opening Overlay */
+/* 3D Book Overlay - Exact 1440px Width */
 #bookModal {
   position: fixed;
   top: 0;
@@ -148,9 +288,9 @@ body {
 
 .book-viewport {
   perspective: 2000px;
-  width: 98vw;
-  height: 94vh;
-  max-width: 1400px;
+  width: 95vw;
+  max-width: 1440px; /* Exact 1440px max width */
+  height: 90vh;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -186,7 +326,7 @@ body {
   padding: 30px;
   text-align: center;
   font-family: 'Cinzel Decorative', serif;
-  font-size: 2rem;
+  font-size: 2.2rem;
   text-shadow: 2px 2px 8px #000;
 }
 
@@ -206,5 +346,26 @@ body {
 
 .pdf-btn { background: #3d1f11; color: #d4af37; border: 1px solid #d4af37; padding: 8px 15px; cursor: pointer; }
 .reactions-section { margin: 20px 0; display: flex; gap: 15px; }
+
+/* Comments with Avatars */
 .comments-section { margin-top: 25px; border-top: 1px dashed #8b5a2b; padding-top: 15px; }
-.comment-item { background: rgba(255,255,255,0.3); padding: 8px; margin: 6px 0; border-left: 3px solid #8b5a2b; }
+.comment-item {
+  background: rgba(255,255,255,0.35);
+  padding: 10px 12px;
+  margin: 10px 0;
+  border-left: 4px solid #8b5a2b;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.comment-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid #8b5a2b;
+  object-fit: cover;
+  background: #2b1810;
+}
+.comment-content { flex: 1; }
+.comment-author { font-weight: bold; color: #5c3a21; font-size: 0.9rem; margin-bottom: 2px; }
+.comment-text { color: #2b1d0c; font-size: 0.95rem; }

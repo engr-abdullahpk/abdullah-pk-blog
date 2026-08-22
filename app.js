@@ -20,6 +20,9 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
+// Default SVG placeholder for users without custom profile photos
+const DEFAULT_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%238b5a2b' d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z'/%3E%3C/svg%3E";
+
 // State Variables
 let allPosts = [];
 let filteredPosts = [];
@@ -27,7 +30,7 @@ let currentPage = 1;
 const postsPerPage = 10;
 let activePostId = null;
 
-// Modal Toggles
+// Modal Controls
 window.toggleAuthModal = () => document.getElementById("authModal").classList.toggle("hidden");
 window.toggleProfileModal = () => {
   if (auth.currentUser) renderUserProfile();
@@ -75,13 +78,13 @@ window.handleForgotPassword = async (e) => {
 
   try {
     await sendPasswordResetEmail(auth, email);
-    alert("Password reset email sent! Check your inbox.");
+    alert("Password reset email sent!");
   } catch (err) { alert(err.message); }
 };
 
 window.handleLogout = async () => { await signOut(auth); };
 
-// Helper function to upload base64 images directly to ImgBB and generate a short HTTP URL
+// ImgBB Upload Service
 async function uploadToImgBB(base64Image) {
   const apiKey = "c08129eb0e527dbcfca12f91a0f9b3dd"; 
   const cleanBase64 = base64Image.split(",")[1];
@@ -98,33 +101,30 @@ async function uploadToImgBB(base64Image) {
   if (data.success) {
     return data.data.url;
   } else {
-    throw new Error("Image hosting upload failed.");
+    throw new Error("Image upload failed.");
   }
 }
 
-// Profile Management
+// User Profile Update Management
 async function renderUserProfile() {
   const user = auth.currentUser;
   if (!user) return;
 
   document.getElementById("profileEmailDisplay").innerText = user.email;
-  document.getElementById("profileNameDisplay").innerText = user.displayName || "Not Set";
+  document.getElementById("profileNameDisplay").innerText = user.displayName || user.email.split("@")[0];
 
-  // Check Firebase Auth photoURL first, fallback to Firestore if set
-  if (user.photoURL) {
-    document.getElementById("profileAvatar").src = user.photoURL;
-  } else {
-    try {
-      const userDoc = await getDoc(doc(db, "users", user.uid));
-      if (userDoc.exists() && userDoc.data().photoURL) {
-        document.getElementById("profileAvatar").src = userDoc.data().photoURL;
-      }
-    } catch (err) {
-      console.error("Error fetching user profile image:", err);
+  let avatarUrl = user.photoURL || DEFAULT_AVATAR;
+  try {
+    const userDoc = await getDoc(doc(db, "users", user.uid));
+    if (userDoc.exists() && userDoc.data().photoURL) {
+      avatarUrl = userDoc.data().photoURL;
     }
+  } catch (err) {
+    console.error("Error loading user profile:", err);
   }
+  document.getElementById("profileAvatar").src = avatarUrl;
 
-  const userPosts = allPosts.filter(p => p.authorId === user.uid || p.author === user.email);
+  const userPosts = allPosts.filter(p => p.authorId === user.uid);
   const container = document.getElementById("userPostsContainer");
   container.innerHTML = userPosts.length ? userPosts.map(p => `
     <div style="margin: 8px 0; padding: 8px; border-bottom: 1px dashed #8b5a2b; display:flex; justify-content:space-between; align-items:center;">
@@ -145,31 +145,26 @@ window.handleUpdateProfile = async () => {
   if (!user) return alert("You must be logged in.");
 
   try {
-    // Handle Image Upload First via ImgBB
+    let photoURL = user.photoURL || DEFAULT_AVATAR;
+
     if (fileInput.files[0]) {
       const file = fileInput.files[0];
       const reader = new FileReader();
 
       reader.onload = async (e) => {
         try {
-          // 1. Get short hosted image URL
-          const shortPhotoUrl = await uploadToImgBB(e.target.result);
+          photoURL = await uploadToImgBB(e.target.result);
+          const updateData = { photoURL };
+          if (name) updateData.displayName = name;
 
-          // 2. Update Firebase Auth Profile using the short URL string
-          const profileData = { photoURL: shortPhotoUrl };
-          if (name) profileData.displayName = name;
+          await updateProfile(user, updateData);
+          await setDoc(doc(db, "users", user.uid), { photoURL, displayName: name || user.displayName || user.email.split("@")[0] }, { merge: true });
 
-          await updateProfile(user, profileData);
-
-          // 3. Sync to Firestore
-          await setDoc(doc(db, "users", user.uid), { photoURL: shortPhotoUrl, displayName: name || user.displayName }, { merge: true });
-
-          document.getElementById("profileAvatar").src = shortPhotoUrl;
+          document.getElementById("profileAvatar").src = photoURL;
           if (name) document.getElementById("profileNameDisplay").innerText = name;
-          alert("Profile & Avatar updated successfully!");
-        } catch (err) {
-          alert("Error updating profile image: " + err.message);
-        }
+          alert("Profile updated successfully!");
+          loadPosts();
+        } catch (err) { alert(err.message); }
       };
       reader.readAsDataURL(file);
     } else if (name) {
@@ -177,10 +172,9 @@ window.handleUpdateProfile = async () => {
       await setDoc(doc(db, "users", user.uid), { displayName: name }, { merge: true });
       document.getElementById("profileNameDisplay").innerText = name;
       alert("Display Name updated successfully!");
+      loadPosts();
     }
-  } catch (err) {
-    alert("Error updating profile: " + err.message);
-  }
+  } catch (err) { alert("Error updating profile: " + err.message); }
 };
 
 window.handleChangePassword = async () => {
@@ -190,14 +184,13 @@ window.handleChangePassword = async () => {
 
   try {
     await updatePassword(user, newPass);
-    alert("Password updated successfully!");
+    alert("Password updated!");
     document.getElementById("newPasswordInput").value = "";
   } catch (err) { alert(err.message); }
 };
 
 // Rich Text Editor Commands
 window.execEditorCmd = (cmd, val = null) => { document.execCommand(cmd, false, val); };
-
 window.insertTable = () => {
   const html = `<table border="1"><tr><td>Cell 1</td><td>Cell 2</td></tr><tr><td>Cell 3</td><td>Cell 4</td></tr></table>`;
   document.execCommand('insertHTML', false, html);
@@ -213,14 +206,23 @@ window.handlePublish = async () => {
 
   if (!title || !body) return alert("Fill in title and body.");
 
+  const authorName = user.displayName || user.email.split("@")[0];
+  let authorPhoto = user.photoURL || DEFAULT_AVATAR;
+
+  // Retrieve user photo from Firestore if not in user object
+  try {
+    const userDoc = await getDoc(doc(db, "users", user.uid));
+    if (userDoc.exists() && userDoc.data().photoURL) authorPhoto = userDoc.data().photoURL;
+  } catch(e) {}
+
   const processPost = async (imageUrl = "") => {
     if (editId) {
-      const docData = { title, content: body };
+      const docData = { title, content: body, authorName, authorPhoto };
       if (imageUrl) docData.imageUrl = imageUrl;
       await updateDoc(doc(db, "posts", editId), docData);
     } else {
       await addDoc(collection(db, "posts"), {
-        title, content: body, author: user.displayName || user.email,
+        title, content: body, authorName, authorPhoto,
         authorId: user.uid, createdAt: new Date(), imageUrl
       });
     }
@@ -234,9 +236,7 @@ window.handlePublish = async () => {
       try {
         const shortUrl = await uploadToImgBB(e.target.result);
         processPost(shortUrl);
-      } catch (err) {
-        alert("Failed to upload manuscript image cover.");
-      }
+      } catch (err) { alert("Failed to upload manuscript cover image."); }
     };
     reader.readAsDataURL(fileInput.files[0]);
   } else {
@@ -289,8 +289,11 @@ function renderPaginatedPosts() {
   container.innerHTML = pagePosts.map(p => `
     <article class="post-card parchment-bg">
       <div>
+        <div class="author-badge">
+          <img src="${p.authorPhoto || DEFAULT_AVATAR}" class="author-avatar" alt="Avatar">
+          <span class="author-name">${p.authorName || p.author || 'Anonymous'}</span>
+        </div>
         <h3>${p.title}</h3>
-        <div class="post-card-meta">Inscribed by ${p.author}</div>
         <div class="post-card-snippet">${p.content.replace(/<[^>]*>/g, '').substring(0, 120)}...</div>
       </div>
       <button class="see-more-btn" onclick="window.openBookModal('${p.id}')">See More</button>
@@ -298,7 +301,7 @@ function renderPaginatedPosts() {
   `).join("");
 }
 
-// 3D Fullscreen Animation
+// 3D Fullscreen Book Overlay
 window.openBookModal = async (id) => {
   activePostId = id;
   const post = allPosts.find(p => p.id === id);
@@ -308,9 +311,17 @@ window.openBookModal = async (id) => {
   document.getElementById("coverTitleDisplay").innerText = post.title;
   
   const formattedDate = post.createdAt ? new Date(post.createdAt.toDate()).toLocaleDateString() : "Ancient Date";
-  document.getElementById("readMeta").innerText = `Inscribed by ${post.author} on ${formattedDate}`;
+  document.getElementById("readMeta").innerHTML = `
+    <div class="author-badge" style="margin-top:10px;">
+      <img src="${post.authorPhoto || DEFAULT_AVATAR}" class="author-avatar">
+      <div>
+        <div class="author-name">${post.authorName || post.author || 'Anonymous'}</div>
+        <div style="font-size:0.8rem; color:#774820;">Inscribed on ${formattedDate}</div>
+      </div>
+    </div>
+  `;
   document.getElementById("readBody").innerHTML = post.content;
-  document.getElementById("readImageContainer").innerHTML = post.imageUrl ? `<img src="${post.imageUrl}" style="max-width:100%; margin:15px 0;">` : "";
+  document.getElementById("readImageContainer").innerHTML = post.imageUrl ? `<img src="${post.imageUrl}" style="max-width:100%; border-radius:4px; margin:15px 0;">` : "";
 
   const user = auth.currentUser;
   document.getElementById("pdfDownloadSection").classList.toggle("hidden", !user);
@@ -335,7 +346,7 @@ window.downloadPDF = () => {
   }).from(element).save();
 };
 
-// Comments Logic
+// Comments Management with Profile Photos and Names
 async function loadComments(postId) {
   const container = document.getElementById("commentsContainer");
   const q = query(collection(db, `posts/${postId}/comments`), orderBy("createdAt", "asc"));
@@ -346,18 +357,35 @@ async function loadComments(postId) {
   snap.forEach(d => {
     const c = d.data();
     const isOwner = user && (user.uid === c.authorId);
-    html += `<div class="comment-item"><strong>${c.author}:</strong> ${c.text}${isOwner ? `<button onclick="window.handleDeleteComment('${postId}', '${d.id}')" style="float:right; color:red; border:none; background:none;">&times;</button>` : ""}</div>`;
+    html += `
+      <div class="comment-item">
+        <img src="${c.authorPhoto || DEFAULT_AVATAR}" class="comment-avatar" alt="Avatar">
+        <div class="comment-content">
+          <div class="comment-author">${c.authorName || c.author || 'Anonymous'}</div>
+          <div class="comment-text">${c.text}</div>
+        </div>
+        ${isOwner ? `<button onclick="window.handleDeleteComment('${postId}', '${d.id}')" style="color:#8b0000; border:none; background:none; cursor:pointer; font-weight:bold;">&times;</button>` : ""}
+      </div>
+    `;
   });
   container.innerHTML = html || "<p style='font-style:italic;'>No transcriptions yet.</p>";
 }
 
 window.handleAddComment = async () => {
-  const text = document.getElementById("commentInput").value;
+  const text = document.getElementById("commentInput").value.trim();
   const user = auth.currentUser;
   if (!text || !user) return;
 
+  const authorName = user.displayName || user.email.split("@")[0];
+  let authorPhoto = user.photoURL || DEFAULT_AVATAR;
+
+  try {
+    const userDoc = await getDoc(doc(db, "users", user.uid));
+    if (userDoc.exists() && userDoc.data().photoURL) authorPhoto = userDoc.data().photoURL;
+  } catch(e) {}
+
   await addDoc(collection(db, `posts/${activePostId}/comments`), {
-    text, author: user.displayName || user.email, authorId: user.uid, createdAt: new Date()
+    text, authorName, authorPhoto, authorId: user.uid, createdAt: new Date()
   });
   document.getElementById("commentInput").value = "";
   loadComments(activePostId);
