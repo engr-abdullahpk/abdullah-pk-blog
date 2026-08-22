@@ -20,14 +20,14 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// Globals
+// State Variables
 let allPosts = [];
 let filteredPosts = [];
 let currentPage = 1;
 const postsPerPage = 10;
 let activePostId = null;
 
-// Modal Controls
+// Modal Toggles
 window.toggleAuthModal = () => document.getElementById("authModal").classList.toggle("hidden");
 window.toggleProfileModal = () => {
   if (auth.currentUser) renderUserProfile();
@@ -43,7 +43,7 @@ window.toggleWriteModal = (reset = true) => {
   document.getElementById("writeModal").classList.toggle("hidden");
 };
 
-// Enter key login handler
+// Enter key & authentication form handlers
 window.handleAuthSubmit = async (e) => {
   e.preventDefault();
   const email = document.getElementById("authEmail").value;
@@ -63,7 +63,7 @@ window.handleEmailRegister = async () => {
 
   try {
     await createUserWithEmailAndPassword(auth, email, pass);
-    alert("Account created!");
+    alert("Account created successfully!");
     window.toggleAuthModal();
   } catch (err) { alert(err.message); }
 };
@@ -81,7 +81,7 @@ window.handleForgotPassword = async (e) => {
 
 window.handleLogout = async () => { await signOut(auth); };
 
-// Profile Management
+// Profile Management with Image Compression
 function renderUserProfile() {
   const user = auth.currentUser;
   if (!user) return;
@@ -105,26 +105,52 @@ function renderUserProfile() {
 
 window.handleUpdateProfile = async () => {
   const user = auth.currentUser;
-  const name = document.getElementById("editDisplayName").value;
+  const name = document.getElementById("editDisplayName").value.trim();
   const fileInput = document.getElementById("editAvatarInput");
 
-  if (!user) return;
+  if (!user) return alert("You must be logged in.");
+
   const updates = {};
   if (name) updates.displayName = name;
 
   if (fileInput.files[0]) {
+    const file = fileInput.files[0];
     const reader = new FileReader();
-    reader.onload = async (e) => {
-      updates.photoURL = e.target.result;
-      await updateProfile(user, updates);
-      alert("Profile updated!");
-      renderUserProfile();
+
+    reader.onload = (e) => {
+      const img = new Image();
+      img.src = e.target.result;
+      
+      img.onload = async () => {
+        // Resize avatar to 150x150 JPEG for optimal Firebase profile storage
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+        canvas.width = 150;
+        canvas.height = 150;
+        ctx.drawImage(img, 0, 0, 150, 150);
+        
+        const optimizedDataUrl = canvas.toDataURL("image/jpeg", 0.7);
+        updates.photoURL = optimizedDataUrl;
+
+        try {
+          await updateProfile(user, updates);
+          document.getElementById("profileAvatar").src = optimizedDataUrl;
+          if (name) document.getElementById("profileNameDisplay").innerText = name;
+          alert("Profile & Avatar updated successfully!");
+        } catch (err) {
+          alert("Failed to update profile image: " + err.message);
+        }
+      };
     };
-    reader.readAsDataURL(fileInput.files[0]);
+    reader.readAsDataURL(file);
   } else if (name) {
-    await updateProfile(user, updates);
-    alert("Profile updated!");
-    renderUserProfile();
+    try {
+      await updateProfile(user, updates);
+      document.getElementById("profileNameDisplay").innerText = name;
+      alert("Display Name updated successfully!");
+    } catch (err) {
+      alert("Error updating profile: " + err.message);
+    }
   }
 };
 
@@ -150,7 +176,7 @@ window.insertTable = () => {
   document.execCommand('insertHTML', false, html);
 };
 
-// Publish with Image Base64 Encoding
+// Manuscript Publishing & Image Base64 Handler
 window.handlePublish = async () => {
   const title = document.getElementById("postTitle").value;
   const body = document.getElementById("editorBody").innerHTML;
@@ -203,7 +229,7 @@ window.handleDeletePost = async (id) => {
   }
 };
 
-// Search & Pagination
+// Search & Pagination Logic
 window.handleSearch = () => {
   const term = document.getElementById("searchInput").value.toLowerCase();
   filteredPosts = allPosts.filter(p => p.title.toLowerCase().includes(term) || p.content.toLowerCase().includes(term));
@@ -238,7 +264,7 @@ function renderPaginatedPosts() {
   `).join("");
 }
 
-// 3D View Modal & PDF Export
+// 3D Fullscreen Animation Controls
 window.openBookModal = async (id) => {
   activePostId = id;
   const post = allPosts.find(p => p.id === id);
@@ -275,7 +301,7 @@ window.downloadPDF = () => {
   }).from(element).save();
 };
 
-// Comments & Reactions
+// Reaction & Comments Logic
 async function loadComments(postId) {
   const container = document.getElementById("commentsContainer");
   const q = query(collection(db, `posts/${postId}/comments`), orderBy("createdAt", "asc"));

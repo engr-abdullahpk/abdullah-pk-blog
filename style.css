@@ -15,7 +15,7 @@ body {
   min-height: 100vh;
 }
 
-/* Header & Footer */
+/* Fixed Header & Footer Layouts */
 .site-header {
   position: fixed;
   top: 0;
@@ -68,7 +68,7 @@ body {
   font-family: 'MedievalSharp', serif;
 }
 
-/* Parchment Backgrounds */
+/* Antique Parchment Textures */
 .parchment-bg {
   background: #f1e2c3;
   background-image: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.2), rgba(139,90,43,0.15));
@@ -77,7 +77,7 @@ body {
   border-radius: 2px;
 }
 
-/* Grid & Cards */
+/* Dynamic Grid & Card Containers */
 .container { max-width: 1100px; margin: 20px auto; padding: 0 15px; }
 .posts-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 25px; }
 
@@ -92,19 +92,19 @@ body {
 .post-card h3 { font-family: 'UnifrakturMaguntia', cursive; font-size: 1.5rem; color: #4a2c11; }
 .see-more-btn { background: #5c3a21; color: #f3e5ab; border: none; padding: 8px 15px; cursor: pointer; }
 
-/* Pagination */
+/* Pagination Styling */
 .pagination-container { display: flex; justify-content: center; align-items: center; margin: 30px 0; gap: 15px; }
 .pagination-container button { background: #2b1810; color: #d4af37; border: 1px solid #8b5a2b; padding: 8px 16px; cursor: pointer; }
 #pageIndicator { color: #d4af37; }
 
 .site-footer { position: fixed; bottom: 0; left: 0; width: 100%; height: 45px; background: #2b1810; border-top: 2px solid #8b5a2b; color: #a66d3b; display: flex; justify-content: center; font-size: 0.85rem; z-index: 900; }
 
-/* Modals */
+/* Modals & Overlays */
 .hidden { display: none !important; }
 .modal { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); display: flex; justify-content: center; align-items: center; z-index: 1000; }
 .modal-content { width: 90%; max-width: 500px; padding: 25px; max-height: 85vh; overflow-y: auto; position: relative; }
 .wide-modal { max-width: 750px; }
-.close-btn { position: absolute; top: 10px; right: 15px; font-size: 1.8rem; cursor: pointer; color: #5c3a21; }
+.close-btn { position: absolute; top: 10px; right: 15px; font-size: 1.8rem; cursor: pointer; color: #5c3a21; z-index: 10; }
 
 .modal-content input, .modal-content textarea, .modal-content select {
   width: 100%; padding: 8px; margin: 6px 0; background: rgba(255,255,255,0.6); border: 1px solid #8b5a2b; font-family: 'MedievalSharp', serif;
@@ -113,12 +113,12 @@ body {
 .auth-options { margin: 8px 0; text-align: right; }
 .auth-options a { color: #5c3a21; font-size: 0.85rem; text-decoration: underline; cursor: pointer; }
 
-/* Profile View */
+/* Profile View Styling */
 .profile-header { display: flex; align-items: center; gap: 15px; margin-top: 10px; }
-.avatar-img { width: 70px; height: 70px; border-radius: 50%; border: 2px solid #8b5a2b; object-fit: cover; }
+.avatar-img { width: 80px; height: 80px; border-radius: 50%; border: 3px solid #8b5a2b; object-fit: cover; background-color: #2b1810; }
 .profile-edit-form { display: flex; flex-direction: column; gap: 6px; }
 
-/* WYSIWYG Editor Toolbar */
+/* Rich Text WYSIWYG Editor Toolbar */
 .editor-toolbar {
   display: flex; flex-wrap: wrap; gap: 4px; background: #e0cca7; padding: 6px; border: 1px solid #8b5a2b; margin-top: 10px;
 }
@@ -131,13 +131,79 @@ body {
 .editor-content table { border-collapse: collapse; width: 100%; margin: 8px 0; }
 .editor-content table, .editor-content th, .editor-content td { border: 1px solid #8b5a2b; padding: 6px; }
 
-/* Book Viewport */
-.book-viewport { perspective: 1500px; width: 90%; max-width: 800px; height: 80vh; }
-.book-3d { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform 1s ease; }
-.book-cover-left { position: absolute; width: 50%; height: 100%; left: 0; background: #3d1f11; border: 4px solid #8b5a2b; transform-origin: left; transition: transform 1.2s; z-index: 2; display: flex; justify-content: center; align-items: center; }
-.cover-title { color: #d4af37; padding: 20px; text-align: center; }
-.book-3d.open .book-cover-left { transform: rotateY(-180deg); }
-.book-page-right { position: absolute; width: 100%; height: 100%; right: 0; padding: 35px; overflow-y: auto; }
+/* Fullscreen 3D Book Opening Overlays */
+#bookModal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.95);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  padding: 0;
+}
+
+.book-viewport {
+  perspective: 2000px;
+  width: 98vw;
+  height: 94vh;
+  max-width: 1400px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.book-3d {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 1.2s cubic-bezier(0.645, 0.045, 0.355, 1);
+}
+
+.book-cover-left {
+  position: absolute;
+  width: 50%;
+  height: 100%;
+  left: 0;
+  background: #2b1810;
+  background-image: radial-gradient(circle, #3d2217 0%, #1a0d08 100%);
+  border: 6px solid #8b5a2b;
+  box-shadow: inset 0 0 50px rgba(0,0,0,0.9), 10px 0 30px rgba(0,0,0,0.8);
+  transform-origin: left;
+  transition: transform 1.2s cubic-bezier(0.645, 0.045, 0.355, 1);
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.cover-title {
+  color: #d4af37;
+  padding: 30px;
+  text-align: center;
+  font-family: 'Cinzel Decorative', serif;
+  font-size: 2rem;
+  text-shadow: 2px 2px 8px #000;
+}
+
+.book-3d.open .book-cover-left {
+  transform: rotateY(-180deg);
+}
+
+.book-page-right {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  right: 0;
+  padding: 45px 60px;
+  overflow-y: auto;
+  box-shadow: inset 0 0 40px rgba(85, 48, 18, 0.3);
+}
+
 .pdf-btn { background: #3d1f11; color: #d4af37; border: 1px solid #d4af37; padding: 8px 15px; cursor: pointer; }
 .reactions-section { margin: 20px 0; display: flex; gap: 15px; }
 .comments-section { margin-top: 25px; border-top: 1px dashed #8b5a2b; padding-top: 15px; }
