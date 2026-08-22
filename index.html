@@ -14,7 +14,7 @@
 </head>
 <body>
 
-  <!-- Fixed Minimal Header -->
+  <!-- Fixed Header -->
   <header class="site-header">
     <div class="header-inner">
       <div class="logo" onclick="window.location.reload()">Abdullah Pk's Blog</div>
@@ -37,14 +37,14 @@
     </div>
   </main>
 
-  <!-- Fixed Minimal Footer -->
+  <!-- Fixed Footer -->
   <footer class="site-footer">
     <div class="footer-inner">
       <p>&copy; 2026 Abdullah Pk's Blog. Inscribed on Ancient Digital Parchment.</p>
     </div>
   </footer>
 
-  <!-- Auth Modal (SignIn / Register / Password Reset) -->
+  <!-- Auth Modal -->
   <div id="authModal" class="modal hidden">
     <div class="modal-content parchment-bg">
       <span class="close-btn" onclick="window.toggleAuthModal()">&times;</span>
@@ -65,7 +65,7 @@
     </div>
   </div>
 
-  <!-- Profile Modal (Details, Avatar Upload, Password Change & User Manuscripts) -->
+  <!-- Profile Modal -->
   <div id="profileModal" class="modal hidden">
     <div class="modal-content parchment-bg wide-modal">
       <span class="close-btn" onclick="window.toggleProfileModal()">&times;</span>
@@ -104,7 +104,7 @@
     </div>
   </div>
 
-  <!-- Write/Edit Manuscript Modal with Rich Formatting Toolbar -->
+  <!-- Write/Edit Manuscript Modal -->
   <div id="writeModal" class="modal hidden">
     <div class="modal-content parchment-bg wide-modal">
       <span class="close-btn" onclick="window.toggleWriteModal()">&times;</span>
@@ -143,7 +143,7 @@
         <button type="button" onclick="window.insertTable()">+ Table</button>
       </div>
 
-      <!-- Content Editable Editor -->
+      <!-- Editor Content Area -->
       <div id="editorBody" class="editor-content" contenteditable="true" placeholder="Inscribe your thoughts on parchment..."></div>
 
       <div class="modal-actions" style="margin-top:15px;">
@@ -152,7 +152,7 @@
     </div>
   </div>
 
-  <!-- Fullscreen 3D Book Opening Overlay Modal -->
+  <!-- Fullscreen 3D Book Overlay Modal -->
   <div id="bookModal" class="modal hidden">
     <div class="book-viewport">
       <div class="book-3d" id="bookElement">

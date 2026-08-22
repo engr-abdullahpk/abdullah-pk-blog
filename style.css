@@ -15,7 +15,7 @@ body {
   min-height: 100vh;
 }
 
-/* Fixed Header & Footer Layouts */
+/* Header & Footer */
 .site-header {
   position: fixed;
   top: 0;
@@ -68,7 +68,7 @@ body {
   font-family: 'MedievalSharp', serif;
 }
 
-/* Antique Parchment Textures */
+/* Parchment Textures */
 .parchment-bg {
   background: #f1e2c3;
   background-image: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.2), rgba(139,90,43,0.15));
@@ -77,7 +77,7 @@ body {
   border-radius: 2px;
 }
 
-/* Dynamic Grid & Card Containers */
+/* Grid & Cards */
 .container { max-width: 1100px; margin: 20px auto; padding: 0 15px; }
 .posts-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 25px; }
 
@@ -92,14 +92,14 @@ body {
 .post-card h3 { font-family: 'UnifrakturMaguntia', cursive; font-size: 1.5rem; color: #4a2c11; }
 .see-more-btn { background: #5c3a21; color: #f3e5ab; border: none; padding: 8px 15px; cursor: pointer; }
 
-/* Pagination Styling */
+/* Pagination */
 .pagination-container { display: flex; justify-content: center; align-items: center; margin: 30px 0; gap: 15px; }
 .pagination-container button { background: #2b1810; color: #d4af37; border: 1px solid #8b5a2b; padding: 8px 16px; cursor: pointer; }
 #pageIndicator { color: #d4af37; }
 
 .site-footer { position: fixed; bottom: 0; left: 0; width: 100%; height: 45px; background: #2b1810; border-top: 2px solid #8b5a2b; color: #a66d3b; display: flex; justify-content: center; font-size: 0.85rem; z-index: 900; }
 
-/* Modals & Overlays */
+/* Modals */
 .hidden { display: none !important; }
 .modal { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); display: flex; justify-content: center; align-items: center; z-index: 1000; }
 .modal-content { width: 90%; max-width: 500px; padding: 25px; max-height: 85vh; overflow-y: auto; position: relative; }
@@ -113,12 +113,12 @@ body {
 .auth-options { margin: 8px 0; text-align: right; }
 .auth-options a { color: #5c3a21; font-size: 0.85rem; text-decoration: underline; cursor: pointer; }
 
-/* Profile View Styling */
+/* Profile View */
 .profile-header { display: flex; align-items: center; gap: 15px; margin-top: 10px; }
 .avatar-img { width: 80px; height: 80px; border-radius: 50%; border: 3px solid #8b5a2b; object-fit: cover; background-color: #2b1810; }
 .profile-edit-form { display: flex; flex-direction: column; gap: 6px; }
 
-/* Rich Text WYSIWYG Editor Toolbar */
+/* Toolbar */
 .editor-toolbar {
   display: flex; flex-wrap: wrap; gap: 4px; background: #e0cca7; padding: 6px; border: 1px solid #8b5a2b; margin-top: 10px;
 }
@@ -131,7 +131,7 @@ body {
 .editor-content table { border-collapse: collapse; width: 100%; margin: 8px 0; }
 .editor-content table, .editor-content th, .editor-content td { border: 1px solid #8b5a2b; padding: 6px; }
 
-/* Fullscreen 3D Book Opening Overlays */
+/* Fullscreen 3D Book Opening Overlay */
 #bookModal {
   position: fixed;
   top: 0;

@@ -4,7 +4,7 @@ import {
   onAuthStateChanged, sendPasswordResetEmail, updateProfile, updatePassword 
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { 
-  getFirestore, collection, addDoc, getDocs, doc, deleteDoc, updateDoc, query, orderBy 
+  getFirestore, collection, addDoc, getDocs, getDoc, setDoc, doc, deleteDoc, updateDoc, query, orderBy 
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -43,7 +43,7 @@ window.toggleWriteModal = (reset = true) => {
   document.getElementById("writeModal").classList.toggle("hidden");
 };
 
-// Enter key & authentication form handlers
+// Authentication
 window.handleAuthSubmit = async (e) => {
   e.preventDefault();
   const email = document.getElementById("authEmail").value;
@@ -81,14 +81,23 @@ window.handleForgotPassword = async (e) => {
 
 window.handleLogout = async () => { await signOut(auth); };
 
-// Profile Management with Image Compression
-function renderUserProfile() {
+// Profile Management with Firestore Avatar Storage (Bypasses photoURL length limit)
+async function renderUserProfile() {
   const user = auth.currentUser;
   if (!user) return;
 
   document.getElementById("profileEmailDisplay").innerText = user.email;
   document.getElementById("profileNameDisplay").innerText = user.displayName || "Not Set";
-  if (user.photoURL) document.getElementById("profileAvatar").src = user.photoURL;
+
+  // Load photo from Firestore users document
+  try {
+    const userDoc = await getDoc(doc(db, "users", user.uid));
+    if (userDoc.exists() && userDoc.data().photoURL) {
+      document.getElementById("profileAvatar").src = userDoc.data().photoURL;
+    }
+  } catch (err) {
+    console.error("Error fetching user profile image:", err);
+  }
 
   const userPosts = allPosts.filter(p => p.authorId === user.uid || p.author === user.email);
   const container = document.getElementById("userPostsContainer");
@@ -110,47 +119,43 @@ window.handleUpdateProfile = async () => {
 
   if (!user) return alert("You must be logged in.");
 
-  const updates = {};
-  if (name) updates.displayName = name;
-
-  if (fileInput.files[0]) {
-    const file = fileInput.files[0];
-    const reader = new FileReader();
-
-    reader.onload = (e) => {
-      const img = new Image();
-      img.src = e.target.result;
-      
-      img.onload = async () => {
-        // Resize avatar to 150x150 JPEG for optimal Firebase profile storage
-        const canvas = document.createElement("canvas");
-        const ctx = canvas.getContext("2d");
-        canvas.width = 150;
-        canvas.height = 150;
-        ctx.drawImage(img, 0, 0, 150, 150);
-        
-        const optimizedDataUrl = canvas.toDataURL("image/jpeg", 0.7);
-        updates.photoURL = optimizedDataUrl;
-
-        try {
-          await updateProfile(user, updates);
-          document.getElementById("profileAvatar").src = optimizedDataUrl;
-          if (name) document.getElementById("profileNameDisplay").innerText = name;
-          alert("Profile & Avatar updated successfully!");
-        } catch (err) {
-          alert("Failed to update profile image: " + err.message);
-        }
-      };
-    };
-    reader.readAsDataURL(file);
-  } else if (name) {
-    try {
-      await updateProfile(user, updates);
+  try {
+    if (name) {
+      await updateProfile(user, { displayName: name });
       document.getElementById("profileNameDisplay").innerText = name;
-      alert("Display Name updated successfully!");
-    } catch (err) {
-      alert("Error updating profile: " + err.message);
     }
+
+    if (fileInput.files[0]) {
+      const file = fileInput.files[0];
+      const reader = new FileReader();
+
+      reader.onload = (e) => {
+        const img = new Image();
+        img.src = e.target.result;
+
+        img.onload = async () => {
+          // Compress avatar to lightweight 120x120 JPEG image
+          const canvas = document.createElement("canvas");
+          const ctx = canvas.getContext("2d");
+          canvas.width = 120;
+          canvas.height = 120;
+          ctx.drawImage(img, 0, 0, 120, 120);
+
+          const compressedBase64 = canvas.toDataURL("image/jpeg", 0.6);
+
+          // Save photo string to Firestore document instead of Firebase Auth profile
+          await setDoc(doc(db, "users", user.uid), { photoURL: compressedBase64 }, { merge: true });
+
+          document.getElementById("profileAvatar").src = compressedBase64;
+          alert("Profile & Avatar updated successfully!");
+        };
+      };
+      reader.readAsDataURL(file);
+    } else if (name) {
+      alert("Display Name updated successfully!");
+    }
+  } catch (err) {
+    alert("Error updating profile: " + err.message);
   }
 };
 
@@ -167,16 +172,14 @@ window.handleChangePassword = async () => {
 };
 
 // Rich Text Editor Commands
-window.execEditorCmd = (cmd, val = null) => {
-  document.execCommand(cmd, false, val);
-};
+window.execEditorCmd = (cmd, val = null) => { document.execCommand(cmd, false, val); };
 
 window.insertTable = () => {
   const html = `<table border="1"><tr><td>Cell 1</td><td>Cell 2</td></tr><tr><td>Cell 3</td><td>Cell 4</td></tr></table>`;
   document.execCommand('insertHTML', false, html);
 };
 
-// Manuscript Publishing & Image Base64 Handler
+// Manuscript Publishing
 window.handlePublish = async () => {
   const title = document.getElementById("postTitle").value;
   const body = document.getElementById("editorBody").innerHTML;
@@ -229,7 +232,7 @@ window.handleDeletePost = async (id) => {
   }
 };
 
-// Search & Pagination Logic
+// Search & Pagination
 window.handleSearch = () => {
   const term = document.getElementById("searchInput").value.toLowerCase();
   filteredPosts = allPosts.filter(p => p.title.toLowerCase().includes(term) || p.content.toLowerCase().includes(term));
@@ -264,7 +267,7 @@ function renderPaginatedPosts() {
   `).join("");
 }
 
-// 3D Fullscreen Animation Controls
+// 3D Fullscreen Animation
 window.openBookModal = async (id) => {
   activePostId = id;
   const post = allPosts.find(p => p.id === id);
@@ -301,7 +304,7 @@ window.downloadPDF = () => {
   }).from(element).save();
 };
 
-// Reaction & Comments Logic
+// Comments Logic
 async function loadComments(postId) {
   const container = document.getElementById("commentsContainer");
   const q = query(collection(db, `posts/${postId}/comments`), orderBy("createdAt", "asc"));
