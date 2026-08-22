@@ -81,7 +81,28 @@ window.handleForgotPassword = async (e) => {
 
 window.handleLogout = async () => { await signOut(auth); };
 
-// Profile Management with Firestore Avatar Storage (Bypasses photoURL length limit)
+// Helper function to upload base64 images directly to ImgBB and generate a short HTTP URL
+async function uploadToImgBB(base64Image) {
+  const apiKey = "c08129eb0e527dbcfca12f91a0f9b3dd"; 
+  const cleanBase64 = base64Image.split(",")[1];
+
+  const formData = new FormData();
+  formData.append("image", cleanBase64);
+
+  const res = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
+    method: "POST",
+    body: formData
+  });
+
+  const data = await res.json();
+  if (data.success) {
+    return data.data.url;
+  } else {
+    throw new Error("Image hosting upload failed.");
+  }
+}
+
+// Profile Management
 async function renderUserProfile() {
   const user = auth.currentUser;
   if (!user) return;
@@ -89,14 +110,18 @@ async function renderUserProfile() {
   document.getElementById("profileEmailDisplay").innerText = user.email;
   document.getElementById("profileNameDisplay").innerText = user.displayName || "Not Set";
 
-  // Load photo from Firestore users document
-  try {
-    const userDoc = await getDoc(doc(db, "users", user.uid));
-    if (userDoc.exists() && userDoc.data().photoURL) {
-      document.getElementById("profileAvatar").src = userDoc.data().photoURL;
+  // Check Firebase Auth photoURL first, fallback to Firestore if set
+  if (user.photoURL) {
+    document.getElementById("profileAvatar").src = user.photoURL;
+  } else {
+    try {
+      const userDoc = await getDoc(doc(db, "users", user.uid));
+      if (userDoc.exists() && userDoc.data().photoURL) {
+        document.getElementById("profileAvatar").src = userDoc.data().photoURL;
+      }
+    } catch (err) {
+      console.error("Error fetching user profile image:", err);
     }
-  } catch (err) {
-    console.error("Error fetching user profile image:", err);
   }
 
   const userPosts = allPosts.filter(p => p.authorId === user.uid || p.author === user.email);
@@ -120,38 +145,37 @@ window.handleUpdateProfile = async () => {
   if (!user) return alert("You must be logged in.");
 
   try {
-    if (name) {
-      await updateProfile(user, { displayName: name });
-      document.getElementById("profileNameDisplay").innerText = name;
-    }
-
+    // Handle Image Upload First via ImgBB
     if (fileInput.files[0]) {
       const file = fileInput.files[0];
       const reader = new FileReader();
 
-      reader.onload = (e) => {
-        const img = new Image();
-        img.src = e.target.result;
+      reader.onload = async (e) => {
+        try {
+          // 1. Get short hosted image URL
+          const shortPhotoUrl = await uploadToImgBB(e.target.result);
 
-        img.onload = async () => {
-          // Compress avatar to lightweight 120x120 JPEG image
-          const canvas = document.createElement("canvas");
-          const ctx = canvas.getContext("2d");
-          canvas.width = 120;
-          canvas.height = 120;
-          ctx.drawImage(img, 0, 0, 120, 120);
+          // 2. Update Firebase Auth Profile using the short URL string
+          const profileData = { photoURL: shortPhotoUrl };
+          if (name) profileData.displayName = name;
 
-          const compressedBase64 = canvas.toDataURL("image/jpeg", 0.6);
+          await updateProfile(user, profileData);
 
-          // Save photo string to Firestore document instead of Firebase Auth profile
-          await setDoc(doc(db, "users", user.uid), { photoURL: compressedBase64 }, { merge: true });
+          // 3. Sync to Firestore
+          await setDoc(doc(db, "users", user.uid), { photoURL: shortPhotoUrl, displayName: name || user.displayName }, { merge: true });
 
-          document.getElementById("profileAvatar").src = compressedBase64;
+          document.getElementById("profileAvatar").src = shortPhotoUrl;
+          if (name) document.getElementById("profileNameDisplay").innerText = name;
           alert("Profile & Avatar updated successfully!");
-        };
+        } catch (err) {
+          alert("Error updating profile image: " + err.message);
+        }
       };
       reader.readAsDataURL(file);
     } else if (name) {
+      await updateProfile(user, { displayName: name });
+      await setDoc(doc(db, "users", user.uid), { displayName: name }, { merge: true });
+      document.getElementById("profileNameDisplay").innerText = name;
       alert("Display Name updated successfully!");
     }
   } catch (err) {
@@ -206,7 +230,14 @@ window.handlePublish = async () => {
 
   if (fileInput.files[0]) {
     const reader = new FileReader();
-    reader.onload = (e) => processPost(e.target.result);
+    reader.onload = async (e) => {
+      try {
+        const shortUrl = await uploadToImgBB(e.target.result);
+        processPost(shortUrl);
+      } catch (err) {
+        alert("Failed to upload manuscript image cover.");
+      }
+    };
     reader.readAsDataURL(fileInput.files[0]);
   } else {
     processPost();
