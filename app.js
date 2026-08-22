@@ -1,15 +1,11 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { 
-  getAuth, 
-  createUserWithEmailAndPassword, 
-  signInWithEmailAndPassword, 
-  signOut, 
-  onAuthStateChanged 
+  getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, 
+  onAuthStateChanged, sendPasswordResetEmail, updateProfile, updatePassword 
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { 
   getFirestore, collection, addDoc, getDocs, doc, deleteDoc, updateDoc, query, orderBy 
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAbICAoF4wtt8WAuH_vlpiSALDrhAs18_U",
@@ -23,9 +19,8 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-const storage = getStorage(app);
 
-// State Variables
+// Globals
 let allPosts = [];
 let filteredPosts = [];
 let currentPage = 1;
@@ -42,55 +37,185 @@ window.toggleWriteModal = (reset = true) => {
   if (reset) {
     document.getElementById("editingPostId").value = "";
     document.getElementById("postTitle").value = "";
-    document.getElementById("postBody").value = "";
+    document.getElementById("editorBody").innerHTML = "";
     document.getElementById("writeModalTitle").innerText = "Inscribe New Manuscript";
   }
   document.getElementById("writeModal").classList.toggle("hidden");
 };
 
-// Email Authentication
-window.handleEmailRegister = async () => {
-  const e = document.getElementById("authEmail").value;
-  const p = document.getElementById("authPassword").value;
-  if (!e || !p) return alert("Please fill in both email and password.");
-  try { 
-    await createUserWithEmailAndPassword(auth, e, p); 
-    alert("Account created successfully!");
-    window.toggleAuthModal(); 
+// Enter key login handler
+window.handleAuthSubmit = async (e) => {
+  e.preventDefault();
+  const email = document.getElementById("authEmail").value;
+  const pass = document.getElementById("authPassword").value;
+  if (!email || !pass) return alert("Fill in email and password.");
+
+  try {
+    await signInWithEmailAndPassword(auth, email, pass);
+    window.toggleAuthModal();
   } catch (err) { alert(err.message); }
 };
 
-window.handleEmailLogin = async () => {
-  const e = document.getElementById("authEmail").value;
-  const p = document.getElementById("authPassword").value;
-  if (!e || !p) return alert("Please fill in both email and password.");
-  try { 
-    await signInWithEmailAndPassword(auth, e, p); 
-    window.toggleAuthModal(); 
+window.handleEmailRegister = async () => {
+  const email = document.getElementById("authEmail").value;
+  const pass = document.getElementById("authPassword").value;
+  if (!email || !pass) return alert("Fill in email and password.");
+
+  try {
+    await createUserWithEmailAndPassword(auth, email, pass);
+    alert("Account created!");
+    window.toggleAuthModal();
+  } catch (err) { alert(err.message); }
+};
+
+window.handleForgotPassword = async (e) => {
+  e.preventDefault();
+  const email = document.getElementById("authEmail").value;
+  if (!email) return alert("Please enter your email address first.");
+
+  try {
+    await sendPasswordResetEmail(auth, email);
+    alert("Password reset email sent! Check your inbox.");
   } catch (err) { alert(err.message); }
 };
 
 window.handleLogout = async () => { await signOut(auth); };
 
-// Search & Pagination Logic
+// Profile Management
+function renderUserProfile() {
+  const user = auth.currentUser;
+  if (!user) return;
+
+  document.getElementById("profileEmailDisplay").innerText = user.email;
+  document.getElementById("profileNameDisplay").innerText = user.displayName || "Not Set";
+  if (user.photoURL) document.getElementById("profileAvatar").src = user.photoURL;
+
+  const userPosts = allPosts.filter(p => p.authorId === user.uid || p.author === user.email);
+  const container = document.getElementById("userPostsContainer");
+  container.innerHTML = userPosts.length ? userPosts.map(p => `
+    <div style="margin: 8px 0; padding: 8px; border-bottom: 1px dashed #8b5a2b; display:flex; justify-content:space-between; align-items:center;">
+      <span>${p.title}</span>
+      <div>
+        <button onclick="window.handleEdit('${p.id}')">Edit</button>
+        <button onclick="window.handleDeletePost('${p.id}')">Delete</button>
+      </div>
+    </div>
+  `).join("") : "<p>No manuscripts inscribed yet.</p>";
+}
+
+window.handleUpdateProfile = async () => {
+  const user = auth.currentUser;
+  const name = document.getElementById("editDisplayName").value;
+  const fileInput = document.getElementById("editAvatarInput");
+
+  if (!user) return;
+  const updates = {};
+  if (name) updates.displayName = name;
+
+  if (fileInput.files[0]) {
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      updates.photoURL = e.target.result;
+      await updateProfile(user, updates);
+      alert("Profile updated!");
+      renderUserProfile();
+    };
+    reader.readAsDataURL(fileInput.files[0]);
+  } else if (name) {
+    await updateProfile(user, updates);
+    alert("Profile updated!");
+    renderUserProfile();
+  }
+};
+
+window.handleChangePassword = async () => {
+  const user = auth.currentUser;
+  const newPass = document.getElementById("newPasswordInput").value;
+  if (!newPass || newPass.length < 6) return alert("Password must be at least 6 characters.");
+
+  try {
+    await updatePassword(user, newPass);
+    alert("Password updated successfully!");
+    document.getElementById("newPasswordInput").value = "";
+  } catch (err) { alert(err.message); }
+};
+
+// Rich Text Editor Commands
+window.execEditorCmd = (cmd, val = null) => {
+  document.execCommand(cmd, false, val);
+};
+
+window.insertTable = () => {
+  const html = `<table border="1"><tr><td>Cell 1</td><td>Cell 2</td></tr><tr><td>Cell 3</td><td>Cell 4</td></tr></table>`;
+  document.execCommand('insertHTML', false, html);
+};
+
+// Publish with Image Base64 Encoding
+window.handlePublish = async () => {
+  const title = document.getElementById("postTitle").value;
+  const body = document.getElementById("editorBody").innerHTML;
+  const editId = document.getElementById("editingPostId").value;
+  const fileInput = document.getElementById("postImage");
+  const user = auth.currentUser;
+
+  if (!title || !body) return alert("Fill in title and body.");
+
+  const processPost = async (imageUrl = "") => {
+    if (editId) {
+      const docData = { title, content: body };
+      if (imageUrl) docData.imageUrl = imageUrl;
+      await updateDoc(doc(db, "posts", editId), docData);
+    } else {
+      await addDoc(collection(db, "posts"), {
+        title, content: body, author: user.displayName || user.email,
+        authorId: user.uid, createdAt: new Date(), imageUrl
+      });
+    }
+    window.toggleWriteModal();
+    loadPosts();
+  };
+
+  if (fileInput.files[0]) {
+    const reader = new FileReader();
+    reader.onload = (e) => processPost(e.target.result);
+    reader.readAsDataURL(fileInput.files[0]);
+  } else {
+    processPost();
+  }
+};
+
+window.handleEdit = (id) => {
+  const post = allPosts.find(p => p.id === id);
+  if (!post) return;
+  document.getElementById("editingPostId").value = id;
+  document.getElementById("postTitle").value = post.title;
+  document.getElementById("editorBody").innerHTML = post.content;
+  document.getElementById("writeModalTitle").innerText = "Edit Manuscript";
+  document.getElementById("profileModal").classList.add("hidden");
+  window.toggleWriteModal(false);
+};
+
+window.handleDeletePost = async (id) => {
+  if (confirm("Delete manuscript?")) {
+    await deleteDoc(doc(db, "posts", id));
+    window.closeBookModal();
+    loadPosts();
+  }
+};
+
+// Search & Pagination
 window.handleSearch = () => {
   const term = document.getElementById("searchInput").value.toLowerCase();
-  filteredPosts = allPosts.filter(p => 
-    p.title.toLowerCase().includes(term) || p.content.toLowerCase().includes(term)
-  );
+  filteredPosts = allPosts.filter(p => p.title.toLowerCase().includes(term) || p.content.toLowerCase().includes(term));
   currentPage = 1;
   renderPaginatedPosts();
 };
 
-window.changePage = (direction) => {
-  currentPage += direction;
-  renderPaginatedPosts();
-};
+window.changePage = (dir) => { currentPage += dir; renderPaginatedPosts(); };
 
 function renderPaginatedPosts() {
   const container = document.getElementById("postsContainer");
   const totalPages = Math.ceil(filteredPosts.length / postsPerPage) || 1;
-
   if (currentPage < 1) currentPage = 1;
   if (currentPage > totalPages) currentPage = totalPages;
 
@@ -101,24 +226,19 @@ function renderPaginatedPosts() {
   document.getElementById("prevBtn").disabled = currentPage === 1;
   document.getElementById("nextBtn").disabled = currentPage === totalPages;
 
-  if (!pagePosts.length) {
-    container.innerHTML = `<p style="color:#d4af37; text-align:center;">No manuscripts found in the archives.</p>`;
-    return;
-  }
-
   container.innerHTML = pagePosts.map(p => `
     <article class="post-card parchment-bg">
       <div>
         <h3>${p.title}</h3>
         <div class="post-card-meta">Inscribed by ${p.author}</div>
-        <div class="post-card-snippet">${p.content.substring(0, 120)}...</div>
+        <div class="post-card-snippet">${p.content.replace(/<[^>]*>/g, '').substring(0, 120)}...</div>
       </div>
       <button class="see-more-btn" onclick="window.openBookModal('${p.id}')">See More</button>
     </article>
   `).join("");
 }
 
-// 3D Book Animation & Content Viewing
+// 3D View Modal & PDF Export
 window.openBookModal = async (id) => {
   activePostId = id;
   const post = allPosts.find(p => p.id === id);
@@ -129,119 +249,33 @@ window.openBookModal = async (id) => {
   
   const formattedDate = post.createdAt ? new Date(post.createdAt.toDate()).toLocaleDateString() : "Ancient Date";
   document.getElementById("readMeta").innerText = `Inscribed by ${post.author} on ${formattedDate}`;
-  document.getElementById("readBody").innerText = post.content;
-  document.getElementById("readImageContainer").innerHTML = post.imageUrl 
-    ? `<img src="${post.imageUrl}" style="max-width:100%; margin:15px 0; border:1px solid #8b5a2b;">` : "";
+  document.getElementById("readBody").innerHTML = post.content;
+  document.getElementById("readImageContainer").innerHTML = post.imageUrl ? `<img src="${post.imageUrl}" style="max-width:100%; margin:15px 0;">` : "";
 
-  // Auth Conditionals for PDF/Comments
   const user = auth.currentUser;
   document.getElementById("pdfDownloadSection").classList.toggle("hidden", !user);
   document.getElementById("commentFormSection").classList.toggle("hidden", !user);
   document.getElementById("commentSignInNotice").classList.toggle("hidden", !!user);
 
   await loadComments(id);
-  await loadReactions(id);
-
   const bookModal = document.getElementById("bookModal");
-  const bookElement = document.getElementById("bookElement");
   bookModal.classList.remove("hidden");
-  
-  setTimeout(() => bookElement.classList.add("open"), 100);
+  setTimeout(() => document.getElementById("bookElement").classList.add("open"), 100);
 };
 
 window.closeBookModal = () => {
-  const bookElement = document.getElementById("bookElement");
-  bookElement.classList.remove("open");
+  document.getElementById("bookElement").classList.remove("open");
   setTimeout(() => document.getElementById("bookModal").classList.add("hidden"), 600);
 };
 
-// Standard A4 PDF Generation
 window.downloadPDF = () => {
   const element = document.getElementById("printableArea");
-  const opt = {
-    margin:       15,
-    filename:     'manuscript.pdf',
-    image:        { type: 'jpeg', quality: 0.98 },
-    html2canvas:  { scale: 2 },
-    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-  };
-  html2pdf().set(opt).from(element).save();
+  html2pdf().set({
+    margin: 15, filename: 'manuscript.pdf', html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4' }
+  }).from(element).save();
 };
 
-// Publish / Edit Post
-window.handlePublish = async () => {
-  const title = document.getElementById("postTitle").value;
-  const body = document.getElementById("postBody").value;
-  const editId = document.getElementById("editingPostId").value;
-  const fileInput = document.getElementById("postImage");
-  const user = auth.currentUser;
-
-  if (!title || !body) return alert("Fill in title and body.");
-
-  try {
-    let imageUrl = "";
-    if (fileInput.files[0]) {
-      const file = fileInput.files[0];
-      const storageRef = ref(storage, `images/${Date.now()}_${file.name}`);
-      const snapshot = await uploadBytes(storageRef, file);
-      imageUrl = await getDownloadURL(snapshot.ref);
-    }
-
-    if (editId) {
-      const docData = { title, content: body };
-      if (imageUrl) docData.imageUrl = imageUrl;
-      await updateDoc(doc(db, "posts", editId), docData);
-    } else {
-      await addDoc(collection(db, "posts"), {
-        title, 
-        content: body, 
-        author: user.email,
-        authorId: user.uid,
-        createdAt: new Date(), 
-        imageUrl
-      });
-    }
-
-    window.toggleWriteModal();
-    loadPosts();
-  } catch (err) { alert(err.message); }
-};
-
-window.handleDeletePost = async (id) => {
-  if (confirm("Delete this manuscript permanently?")) {
-    await deleteDoc(doc(db, "posts", id));
-    window.closeBookModal();
-    loadPosts();
-  }
-};
-
-// Reaction System
-window.handleReaction = async (type) => {
-  const user = auth.currentUser;
-  if (!user) return alert("Please sign in to react.");
-
-  const refDoc = doc(db, `posts/${activePostId}/reactions`, `${user.uid}_${type}`);
-  await updateDoc(refDoc, { count: 1 }).catch(async () => {
-    await addDoc(collection(db, `posts/${activePostId}/reactions`), { user: user.uid, type });
-  });
-  loadReactions(activePostId);
-};
-
-async function loadReactions(postId) {
-  const snap = await getDocs(collection(db, `posts/${postId}/reactions`));
-  let quill = 0, candle = 0, scroll = 0;
-  snap.forEach(d => {
-    const data = d.data();
-    if (data.type === 'quill') quill++;
-    if (data.type === 'candle') candle++;
-    if (data.type === 'scroll') scroll++;
-  });
-  document.getElementById("reactQuillCount").innerText = quill;
-  document.getElementById("reactCandleCount").innerText = candle;
-  document.getElementById("reactScrollCount").innerText = scroll;
-}
-
-// Commenting System
+// Comments & Reactions
 async function loadComments(postId) {
   const container = document.getElementById("commentsContainer");
   const q = query(collection(db, `posts/${postId}/comments`), orderBy("createdAt", "asc"));
@@ -252,11 +286,7 @@ async function loadComments(postId) {
   snap.forEach(d => {
     const c = d.data();
     const isOwner = user && (user.uid === c.authorId);
-    html += `
-      <div class="comment-item">
-        <strong>${c.author}:</strong> ${c.text}
-        ${isOwner ? `<button onclick="window.handleDeleteComment('${postId}', '${d.id}')" style="float:right; color:red; background:none; border:none; cursor:pointer;">&times;</button>` : ""}
-      </div>`;
+    html += `<div class="comment-item"><strong>${c.author}:</strong> ${c.text}${isOwner ? `<button onclick="window.handleDeleteComment('${postId}', '${d.id}')" style="float:right; color:red; border:none; background:none;">&times;</button>` : ""}</div>`;
   });
   container.innerHTML = html || "<p style='font-style:italic;'>No transcriptions yet.</p>";
 }
@@ -267,10 +297,7 @@ window.handleAddComment = async () => {
   if (!text || !user) return;
 
   await addDoc(collection(db, `posts/${activePostId}/comments`), {
-    text, 
-    author: user.email, 
-    authorId: user.uid,
-    createdAt: new Date()
+    text, author: user.displayName || user.email, authorId: user.uid, createdAt: new Date()
   });
   document.getElementById("commentInput").value = "";
   loadComments(activePostId);
@@ -281,38 +308,6 @@ window.handleDeleteComment = async (postId, commentId) => {
   loadComments(postId);
 };
 
-// User Profile Section Rendering
-function renderUserProfile() {
-  const user = auth.currentUser;
-  if (!user) return;
-
-  document.getElementById("profileUserDetail").innerText = user.email;
-  const userPosts = allPosts.filter(p => p.authorId === user.uid || p.author === user.email);
-  
-  const container = document.getElementById("userPostsContainer");
-  container.innerHTML = userPosts.length ? userPosts.map(p => `
-    <div style="margin: 8px 0; padding: 8px; border-bottom: 1px dashed #8b5a2b; display:flex; justify-content:space-between;">
-      <span>${p.title}</span>
-      <div>
-        <button onclick="window.handleEdit('${p.id}')">Edit</button>
-        <button onclick="window.handleDeletePost('${p.id}')">Delete</button>
-      </div>
-    </div>
-  `).join("") : "<p>You have not inscribed any manuscripts yet.</p>";
-}
-
-window.handleEdit = (id) => {
-  const post = allPosts.find(p => p.id === id);
-  if (!post) return;
-  document.getElementById("editingPostId").value = id;
-  document.getElementById("postTitle").value = post.title;
-  document.getElementById("postBody").value = post.content;
-  document.getElementById("writeModalTitle").innerText = "Edit Manuscript";
-  window.toggleProfileModal();
-  window.toggleWriteModal(false);
-};
-
-// Core Loaders & Auth Watchers
 async function loadPosts() {
   const q = query(collection(db, "posts"), orderBy("createdAt", "desc"));
   const snap = await getDocs(q);
