@@ -15,7 +15,7 @@ body {
   min-height: 100vh;
 }
 
-/* Header & Footer */
+/* Header & Navigation */
 .site-header {
   position: fixed;
   top: 0;
@@ -30,7 +30,7 @@ body {
   justify-content: center;
 }
 
-.header-inner, .footer-inner {
+.header-inner {
   width: 100%;
   max-width: 1440px;
   height: 100%;
@@ -38,7 +38,7 @@ body {
   justify-content: space-between;
   align-items: center;
   padding: 0 20px;
-  margin: 0 auto;
+  position: relative;
 }
 
 .logo {
@@ -47,6 +47,7 @@ body {
   font-size: 1.4rem;
   font-weight: bold;
   cursor: pointer;
+  white-space: nowrap;
 }
 
 .search-box input {
@@ -59,7 +60,12 @@ body {
   width: 250px;
 }
 
-#navLinks button {
+.nav-links {
+  display: flex;
+  align-items: center;
+}
+
+.nav-links button {
   background: #8b5a2b;
   color: #f3e5ab;
   border: 1px solid #d4af37;
@@ -70,7 +76,16 @@ body {
   font-family: 'MedievalSharp', serif;
 }
 
-/* Main Container - Center Aligned & 1440px Maximum Width */
+.hamburger-btn {
+  display: none;
+  background: none;
+  border: none;
+  color: #d4af37;
+  font-size: 1.8rem;
+  cursor: pointer;
+}
+
+/* Layout Container (1440px Centered) */
 .container {
   width: 100%;
   max-width: 1440px;
@@ -84,7 +99,7 @@ body {
   gap: 25px;
 }
 
-/* Parchment Textures */
+/* Parchment Styling */
 .parchment-bg {
   background: #f1e2c3;
   background-image: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.2), rgba(139,90,43,0.15));
@@ -108,7 +123,6 @@ body {
   margin-bottom: 8px;
 }
 
-/* User Profile Badge for Posts and Comments */
 .author-badge {
   display: flex;
   align-items: center;
@@ -180,6 +194,16 @@ body {
   justify-content: center;
   font-size: 0.85rem;
   z-index: 900;
+}
+
+.footer-inner {
+  width: 100%;
+  max-width: 1440px;
+  height: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 20px;
 }
 
 /* Modals */
@@ -271,7 +295,7 @@ body {
 .editor-content table { border-collapse: collapse; width: 100%; margin: 8px 0; }
 .editor-content table, .editor-content th, .editor-content td { border: 1px solid #8b5a2b; padding: 6px; }
 
-/* 3D Book Overlay - Exact 1440px Width */
+/* 3D Animated Book Overlay (Corrected Full Width Opening Alignment) */
 #bookModal {
   position: fixed;
   top: 0;
@@ -289,7 +313,7 @@ body {
 .book-viewport {
   perspective: 2000px;
   width: 95vw;
-  max-width: 1440px; /* Exact 1440px max width */
+  max-width: 1440px;
   height: 90vh;
   display: flex;
   justify-content: center;
@@ -301,24 +325,25 @@ body {
   height: 100%;
   position: relative;
   transform-style: preserve-3d;
-  transition: transform 1.2s cubic-bezier(0.645, 0.045, 0.355, 1);
 }
 
 .book-cover-left {
   position: absolute;
-  width: 50%;
+  width: 100%;
   height: 100%;
+  top: 0;
   left: 0;
   background: #2b1810;
   background-image: radial-gradient(circle, #3d2217 0%, #1a0d08 100%);
   border: 6px solid #8b5a2b;
   box-shadow: inset 0 0 50px rgba(0,0,0,0.9), 10px 0 30px rgba(0,0,0,0.8);
-  transform-origin: left;
+  transform-origin: left center;
   transition: transform 1.2s cubic-bezier(0.645, 0.045, 0.355, 1);
   z-index: 2;
   display: flex;
   justify-content: center;
   align-items: center;
+  backface-visibility: hidden;
 }
 
 .cover-title {
@@ -326,7 +351,7 @@ body {
   padding: 30px;
   text-align: center;
   font-family: 'Cinzel Decorative', serif;
-  font-size: 2.2rem;
+  font-size: 2.5rem;
   text-shadow: 2px 2px 8px #000;
 }
 
@@ -338,16 +363,18 @@ body {
   position: absolute;
   width: 100%;
   height: 100%;
-  right: 0;
+  top: 0;
+  left: 0;
   padding: 45px 60px;
   overflow-y: auto;
   box-shadow: inset 0 0 40px rgba(85, 48, 18, 0.3);
+  z-index: 1;
 }
 
 .pdf-btn { background: #3d1f11; color: #d4af37; border: 1px solid #d4af37; padding: 8px 15px; cursor: pointer; }
 .reactions-section { margin: 20px 0; display: flex; gap: 15px; }
 
-/* Comments with Avatars */
+/* Comments */
 .comments-section { margin-top: 25px; border-top: 1px dashed #8b5a2b; padding-top: 15px; }
 .comment-item {
   background: rgba(255,255,255,0.35);
@@ -369,3 +396,47 @@ body {
 .comment-content { flex: 1; }
 .comment-author { font-weight: bold; color: #5c3a21; font-size: 0.9rem; margin-bottom: 2px; }
 .comment-text { color: #2b1d0c; font-size: 0.95rem; }
+
+/* Mobile Responsive Styling */
+@media (max-width: 768px) {
+  .hamburger-btn {
+    display: block;
+  }
+
+  .search-box input {
+    width: 140px;
+  }
+
+  .nav-links {
+    display: none;
+    position: absolute;
+    top: 60px;
+    right: 0;
+    width: 200px;
+    background: #2b1810;
+    border: 2px solid #8b5a2b;
+    border-top: none;
+    flex-direction: column;
+    padding: 10px;
+    gap: 8px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.8);
+  }
+
+  .nav-links.active {
+    display: flex;
+  }
+
+  .nav-links button {
+    width: 100%;
+    margin-left: 0;
+    text-align: center;
+  }
+
+  .book-page-right {
+    padding: 30px 20px;
+  }
+
+  .cover-title {
+    font-size: 1.6rem;
+  }
+}

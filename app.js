@@ -20,7 +20,6 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// Default SVG placeholder for users without custom profile photos
 const DEFAULT_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%238b5a2b' d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z'/%3E%3C/svg%3E";
 
 // State Variables
@@ -30,13 +29,26 @@ let currentPage = 1;
 const postsPerPage = 10;
 let activePostId = null;
 
-// Modal Controls
-window.toggleAuthModal = () => document.getElementById("authModal").classList.toggle("hidden");
+// Mobile Navigation Toggle
+window.toggleMobileNav = () => {
+  const nav = document.getElementById("navLinks");
+  nav.classList.toggle("active");
+};
+
+// Modal Toggles
+window.toggleAuthModal = () => {
+  document.getElementById("navLinks").classList.remove("active");
+  document.getElementById("authModal").classList.toggle("hidden");
+};
+
 window.toggleProfileModal = () => {
+  document.getElementById("navLinks").classList.remove("active");
   if (auth.currentUser) renderUserProfile();
   document.getElementById("profileModal").classList.toggle("hidden");
 };
+
 window.toggleWriteModal = (reset = true) => {
+  document.getElementById("navLinks").classList.remove("active");
   if (reset) {
     document.getElementById("editingPostId").value = "";
     document.getElementById("postTitle").value = "";
@@ -82,7 +94,10 @@ window.handleForgotPassword = async (e) => {
   } catch (err) { alert(err.message); }
 };
 
-window.handleLogout = async () => { await signOut(auth); };
+window.handleLogout = async () => {
+  document.getElementById("navLinks").classList.remove("active");
+  await signOut(auth);
+};
 
 // ImgBB Upload Service
 async function uploadToImgBB(base64Image) {
@@ -105,7 +120,7 @@ async function uploadToImgBB(base64Image) {
   }
 }
 
-// User Profile Update Management
+// User Profile Management
 async function renderUserProfile() {
   const user = auth.currentUser;
   if (!user) return;
@@ -127,7 +142,7 @@ async function renderUserProfile() {
   const userPosts = allPosts.filter(p => p.authorId === user.uid);
   const container = document.getElementById("userPostsContainer");
   container.innerHTML = userPosts.length ? userPosts.map(p => `
-    <div style="margin: 8px 0; padding: 8px; border-bottom: 1px dashed #8b5a2b; display:flex; justify-content:space-between; align-items:center;">
+    <div style="margin: 8px 0; padding: 8px; border-bottom: 1px dashed #8b5a2b; display:flex; justify-space-between; align-items:center;">
       <span>${p.title}</span>
       <div>
         <button onclick="window.handleEdit('${p.id}')">Edit</button>
@@ -189,7 +204,7 @@ window.handleChangePassword = async () => {
   } catch (err) { alert(err.message); }
 };
 
-// Rich Text Editor Commands
+// Rich Text Commands
 window.execEditorCmd = (cmd, val = null) => { document.execCommand(cmd, false, val); };
 window.insertTable = () => {
   const html = `<table border="1"><tr><td>Cell 1</td><td>Cell 2</td></tr><tr><td>Cell 3</td><td>Cell 4</td></tr></table>`;
@@ -209,7 +224,6 @@ window.handlePublish = async () => {
   const authorName = user.displayName || user.email.split("@")[0];
   let authorPhoto = user.photoURL || DEFAULT_AVATAR;
 
-  // Retrieve user photo from Firestore if not in user object
   try {
     const userDoc = await getDoc(doc(db, "users", user.uid));
     if (userDoc.exists() && userDoc.data().photoURL) authorPhoto = userDoc.data().photoURL;
@@ -301,7 +315,7 @@ function renderPaginatedPosts() {
   `).join("");
 }
 
-// 3D Fullscreen Book Overlay
+// 3D Fullscreen Book Modal Opening
 window.openBookModal = async (id) => {
   activePostId = id;
   const post = allPosts.find(p => p.id === id);
@@ -346,7 +360,7 @@ window.downloadPDF = () => {
   }).from(element).save();
 };
 
-// Comments Management with Profile Photos and Names
+// Comments Management
 async function loadComments(postId) {
   const container = document.getElementById("commentsContainer");
   const q = query(collection(db, `posts/${postId}/comments`), orderBy("createdAt", "asc"));

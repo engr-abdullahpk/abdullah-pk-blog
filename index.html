@@ -18,14 +18,23 @@
   <header class="site-header">
     <div class="header-inner">
       <div class="logo" onclick="window.location.reload()">Abdullah Pk's Blog</div>
+      
+      <!-- Search Input -->
       <div class="search-box">
         <input type="text" id="searchInput" placeholder="Search archives..." oninput="window.handleSearch()">
       </div>
-      <nav id="navLinks"></nav>
+
+      <!-- Hamburger Button (Mobile Only) -->
+      <button class="hamburger-btn" id="hamburgerBtn" onclick="window.toggleMobileNav()">
+        &#9776;
+      </button>
+
+      <!-- Navigation Links -->
+      <nav id="navLinks" class="nav-links"></nav>
     </div>
   </header>
 
-  <!-- Main Content Layout (1440px Center-Aligned) -->
+  <!-- Main Content Layout (1440px Maximum Width) -->
   <main class="container">
     <section id="postsContainer" class="posts-grid"></section>
     
@@ -152,16 +161,16 @@
     </div>
   </div>
 
-  <!-- Fullscreen 3D Book Overlay Modal (1440px Width) -->
+  <!-- Fullscreen 3D Book Overlay Modal -->
   <div id="bookModal" class="modal hidden">
     <div class="book-viewport">
       <div class="book-3d" id="bookElement">
-        <!-- Left Cover Page -->
+        <!-- Front Book Cover Page -->
         <div class="book-cover-left">
           <div class="cover-title" id="coverTitleDisplay">Manuscript</div>
         </div>
         
-        <!-- Right Main Content Page -->
+        <!-- Inner Main Content Page -->
         <div class="book-page-right parchment-bg">
           <span class="close-btn" onclick="window.closeBookModal()">&times;</span>
           <div id="printableArea">
