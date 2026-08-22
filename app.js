@@ -1,7 +1,8 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { 
   getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, 
-  onAuthStateChanged, sendPasswordResetEmail, updateProfile, updatePassword 
+  onAuthStateChanged, sendPasswordResetEmail, updateProfile, updatePassword,
+  EmailAuthProvider, reauthenticateWithCredential
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { 
   getFirestore, collection, addDoc, getDocs, getDoc, setDoc, doc, deleteDoc, updateDoc, query, orderBy 
@@ -53,7 +54,7 @@ window.toggleWriteModal = (reset = true) => {
     document.getElementById("editingPostId").value = "";
     document.getElementById("postTitle").value = "";
     document.getElementById("editorBody").innerHTML = "";
-    document.getElementById("writeModalTitle").innerText = "Inscribe New Manuscript";
+    document.getElementById("writeModalTitle").innerText = "Create New Blog Post";
   }
   document.getElementById("writeModal").classList.toggle("hidden");
 };
@@ -142,14 +143,14 @@ async function renderUserProfile() {
   const userPosts = allPosts.filter(p => p.authorId === user.uid);
   const container = document.getElementById("userPostsContainer");
   container.innerHTML = userPosts.length ? userPosts.map(p => `
-    <div style="margin: 8px 0; padding: 8px; border-bottom: 1px dashed #8b5a2b; display:flex; justify-content:space-between; align-items:center;">
+    <div id="user-post-${p.id}" style="margin: 8px 0; padding: 8px; border-bottom: 1px dashed #8b5a2b; display:flex; justify-content:space-between; align-items:center;">
       <span>${p.title}</span>
       <div>
         <button onclick="window.handleEdit('${p.id}')">Edit</button>
         <button onclick="window.handleDeletePost('${p.id}')">Delete</button>
       </div>
     </div>
-  `).join("") : "<p>No manuscripts inscribed yet.</p>";
+  `).join("") : "<p>No blog posts published yet.</p>";
 }
 
 window.handleUpdateProfile = async () => {
@@ -192,16 +193,37 @@ window.handleUpdateProfile = async () => {
   } catch (err) { alert("Error updating profile: " + err.message); }
 };
 
+// Enhanced 3-Option Password Change with Re-authentication
 window.handleChangePassword = async () => {
   const user = auth.currentUser;
+  const oldPass = document.getElementById("oldPasswordInput").value;
   const newPass = document.getElementById("newPasswordInput").value;
-  if (!newPass || newPass.length < 6) return alert("Password must be at least 6 characters.");
+  const confirmPass = document.getElementById("confirmPasswordInput").value;
+
+  if (!oldPass || !newPass || !confirmPass) {
+    return alert("Please fill in all three password fields.");
+  }
+
+  if (newPass !== confirmPass) {
+    return alert("New Password and Confirm Password do not match.");
+  }
+
+  if (newPass.length < 6) {
+    return alert("New password must be at least 6 characters long.");
+  }
 
   try {
+    const credential = EmailAuthProvider.credential(user.email, oldPass);
+    await reauthenticateWithCredential(user, credential);
     await updatePassword(user, newPass);
-    alert("Password updated!");
+    
+    alert("Password updated successfully!");
+    document.getElementById("oldPasswordInput").value = "";
     document.getElementById("newPasswordInput").value = "";
-  } catch (err) { alert(err.message); }
+    document.getElementById("confirmPasswordInput").value = "";
+  } catch (err) {
+    alert("Password Change Failed: " + (err.code === "auth/wrong-password" ? "Incorrect old password." : err.message));
+  }
 };
 
 // Rich Text Commands
@@ -211,7 +233,7 @@ window.insertTable = () => {
   document.execCommand('insertHTML', false, html);
 };
 
-// Manuscript Publishing
+// Blog Post Publishing
 window.handlePublish = async () => {
   const title = document.getElementById("postTitle").value;
   const body = document.getElementById("editorBody").innerHTML;
@@ -250,7 +272,7 @@ window.handlePublish = async () => {
       try {
         const shortUrl = await uploadToImgBB(e.target.result);
         processPost(shortUrl);
-      } catch (err) { alert("Failed to upload manuscript cover image."); }
+      } catch (err) { alert("Failed to upload blog post cover image."); }
     };
     reader.readAsDataURL(fileInput.files[0]);
   } else {
@@ -264,16 +286,27 @@ window.handleEdit = (id) => {
   document.getElementById("editingPostId").value = id;
   document.getElementById("postTitle").value = post.title;
   document.getElementById("editorBody").innerHTML = post.content;
-  document.getElementById("writeModalTitle").innerText = "Edit Manuscript";
+  document.getElementById("writeModalTitle").innerText = "Edit Blog Post";
   document.getElementById("profileModal").classList.add("hidden");
   window.toggleWriteModal(false);
 };
 
+// Instant Post Deletion without Page Refresh
 window.handleDeletePost = async (id) => {
-  if (confirm("Delete manuscript?")) {
+  if (confirm("Delete this blog post?")) {
     await deleteDoc(doc(db, "posts", id));
-    window.closeBookModal();
-    loadPosts();
+    
+    // Immediately remove from internal state arrays
+    allPosts = allPosts.filter(p => p.id !== id);
+    filteredPosts = filteredPosts.filter(p => p.id !== id);
+
+    // Remove element from profile modal list in DOM immediately
+    const userPostItem = document.getElementById(`user-post-${id}`);
+    if (userPostItem) userPostItem.remove();
+
+    // Re-render main feed & close reader modal if active
+    if (activePostId === id) window.closeBookModal();
+    renderPaginatedPosts();
   }
 };
 
@@ -330,7 +363,7 @@ window.openBookModal = async (id) => {
       <img src="${post.authorPhoto || DEFAULT_AVATAR}" class="author-avatar">
       <div>
         <div class="author-name">${post.authorName || post.author || 'Anonymous'}</div>
-        <div style="font-size:0.8rem; color:#774820;">Inscribed on ${formattedDate}</div>
+        <div style="font-size:0.8rem; color:#774820;">Published on ${formattedDate}</div>
       </div>
     </div>
   `;
@@ -356,7 +389,7 @@ window.closeBookModal = () => {
 window.downloadPDF = () => {
   const element = document.getElementById("printableArea");
   html2pdf().set({
-    margin: 15, filename: 'manuscript.pdf', html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4' }
+    margin: 15, filename: 'blog-post.pdf', html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4' }
   }).from(element).save();
 };
 
@@ -382,7 +415,7 @@ async function loadComments(postId) {
       </div>
     `;
   });
-  container.innerHTML = html || "<p style='font-style:italic;'>No transcriptions yet.</p>";
+  container.innerHTML = html || "<p style='font-style:italic;'>No comments yet.</p>";
 }
 
 window.handleAddComment = async () => {
@@ -410,9 +443,8 @@ window.handleDeleteComment = async (postId, commentId) => {
   loadComments(postId);
 };
 
-// Keyboard Enter Listener Submissions for Comments & Blog Post Inputs
+// Keyboard Enter Listener Submissions
 document.addEventListener("DOMContentLoaded", () => {
-  // Enter key inside comment input
   const commentInput = document.getElementById("commentInput");
   if (commentInput) {
     commentInput.addEventListener("keypress", (e) => {
@@ -423,7 +455,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Enter key inside manuscript post title input
   const postTitle = document.getElementById("postTitle");
   if (postTitle) {
     postTitle.addEventListener("keypress", (e) => {
@@ -445,11 +476,18 @@ async function loadPosts() {
 
 function renderNav(user) {
   const nav = document.getElementById("navLinks");
-  nav.innerHTML = user ? `
-    <button onclick="window.toggleProfileModal()">Profile</button>
-    <button onclick="window.toggleWriteModal()">Inscribe</button>
-    <button onclick="window.handleLogout()">Sign Out</button>
-  ` : `<button onclick="window.toggleAuthModal()">Scribe Login</button>`;
+  const headerPostBtn = document.getElementById("headerPostBtn");
+
+  if (user) {
+    headerPostBtn.classList.remove("hidden");
+    nav.innerHTML = `
+      <button onclick="window.toggleProfileModal()">Profile</button>
+      <button onclick="window.handleLogout()">Sign Out</button>
+    `;
+  } else {
+    headerPostBtn.classList.add("hidden");
+    nav.innerHTML = `<button onclick="window.toggleAuthModal()">Author Login</button>`;
+  }
 }
 
 onAuthStateChanged(auth, (user) => {

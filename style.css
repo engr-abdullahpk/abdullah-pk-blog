@@ -32,7 +32,7 @@ body {
 
 .header-inner {
   width: 100%;
-  max-width: 1000px; /* Matched to 3D Book Width */
+  max-width: 1000px;
   height: 100%;
   display: flex;
   justify-content: space-between;
@@ -48,6 +48,30 @@ body {
   font-weight: bold;
   cursor: pointer;
   white-space: nowrap;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.post-header-btn {
+  background: #8b5a2b;
+  color: #f3e5ab;
+  border: 1px solid #d4af37;
+  padding: 6px 14px;
+  cursor: pointer;
+  border-radius: 3px;
+  font-family: 'MedievalSharp', serif;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.post-header-btn:hover {
+  background: #a66d3b;
 }
 
 .nav-container {
@@ -82,7 +106,6 @@ body {
   font-family: 'MedievalSharp', serif;
 }
 
-/* Desktop: Hamburger Icon Strictly Hidden */
 .hamburger-btn {
   display: none !important;
 }
@@ -399,7 +422,7 @@ body {
 .comment-author { font-weight: bold; color: #5c3a21; font-size: 0.9rem; margin-bottom: 2px; }
 .comment-text { color: #2b1d0c; font-size: 0.95rem; }
 
-/* Mobile Only Hamburger & Menu Consolidation (<= 768px) */
+/* Mobile Navigation (<= 768px) */
 @media (max-width: 768px) {
   .hamburger-btn {
     display: block !important;
