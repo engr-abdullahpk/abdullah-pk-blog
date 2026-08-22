@@ -5,16 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Abdullah Pk's Blog</title>
   <link rel="stylesheet" href="style.css">
-  <!-- Fonts: Vintage Calligraphic Header & Reading Fonts -->
+  <!-- Antique Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=UnifrakturMaguntia&family=IM+Fell+English+SC&family=MedievalSharp&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=UnifrakturMaguntia&family=MedievalSharp&display=swap" rel="stylesheet">
   <!-- html2pdf Library for A4 Export -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body>
 
-  <!-- Fixed Minimal Header styled like an Old Leather Book Spine -->
+  <!-- Minimal Fixed Header -->
   <header class="site-header">
     <div class="header-inner">
       <div class="logo" onclick="window.location.reload()">Abdullah Pk's Blog</div>
@@ -25,7 +25,7 @@
     </div>
   </header>
 
-  <!-- Main Content Layout -->
+  <!-- Main Content Area -->
   <main class="container">
     <section id="postsContainer" class="posts-grid"></section>
     
@@ -37,43 +37,24 @@
     </div>
   </main>
 
-  <!-- Fixed Minimal Footer -->
+  <!-- Minimal Fixed Footer -->
   <footer class="site-footer">
     <div class="footer-inner">
       <p>&copy; 2026 Abdullah Pk's Blog. Inscribed on Ancient Digital Parchment.</p>
     </div>
   </footer>
 
-  <!-- Auth Modal (Email/Password or Phone OTP) -->
+  <!-- Auth Modal (Email & Password Only) -->
   <div id="authModal" class="modal hidden">
     <div class="modal-content parchment-bg">
       <span class="close-btn" onclick="window.toggleAuthModal()">&times;</span>
       <h2>Scribe Access</h2>
-      
-      <div class="auth-tabs">
-        <button id="emailTabBtn" class="active" onclick="window.switchAuthTab('email')">Email/Password</button>
-        <button id="phoneTabBtn" onclick="window.switchAuthTab('phone')">Phone OTP</button>
-      </div>
-
-      <!-- Email Auth Form -->
       <div id="emailAuthSection">
         <input type="email" id="authEmail" placeholder="Scribe Email">
         <input type="password" id="authPassword" placeholder="Secret Password">
         <div class="modal-actions">
           <button onclick="window.handleEmailLogin()">Sign In</button>
           <button onclick="window.handleEmailRegister()">Sign Up</button>
-        </div>
-      </div>
-
-      <!-- Phone Auth Form with OTP -->
-      <div id="phoneAuthSection" class="hidden">
-        <input type="tel" id="authPhone" placeholder="+8801700000000">
-        <div id="recaptcha-container"></div>
-        <button id="sendOtpBtn" onclick="window.handleSendOTP()">Send Verification Code</button>
-        
-        <div id="otpInputGroup" class="hidden" style="margin-top: 10px;">
-          <input type="text" id="authOtp" placeholder="Enter 6-digit OTP">
-          <button onclick="window.handleVerifyOTP()">Verify & Access</button>
         </div>
       </div>
     </div>
@@ -106,16 +87,16 @@
     </div>
   </div>
 
-  <!-- Book Opening Expansion Modal -->
+  <!-- 3D Book Opening Expansion Modal -->
   <div id="bookModal" class="modal hidden">
     <div class="book-viewport">
       <div class="book-3d" id="bookElement">
-        <!-- Left Page Cover (Flips Open) -->
+        <!-- Left Page Cover -->
         <div class="book-cover-left">
           <div class="cover-title" id="coverTitleDisplay">Manuscript</div>
         </div>
         
-        <!-- Right Page (Content Parchment) -->
+        <!-- Right Page Content -->
         <div class="book-page-right parchment-bg">
           <span class="close-btn" onclick="window.closeBookModal()">&times;</span>
           <div id="printableArea">
