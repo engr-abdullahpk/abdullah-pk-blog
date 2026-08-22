@@ -19,22 +19,24 @@
     <div class="header-inner">
       <div class="logo" onclick="window.location.reload()">Abdullah Pk's Blog</div>
       
-      <!-- Search Input -->
-      <div class="search-box">
-        <input type="text" id="searchInput" placeholder="Search archives..." oninput="window.handleSearch()">
-      </div>
-
       <!-- Hamburger Button (Mobile Only) -->
       <button class="hamburger-btn" id="hamburgerBtn" onclick="window.toggleMobileNav()">
         &#9776;
       </button>
 
-      <!-- Navigation Links -->
-      <nav id="navLinks" class="nav-links"></nav>
+      <!-- Navigation & Mobile Drawer -->
+      <div id="navContainer" class="nav-container">
+        <!-- Search Input -->
+        <div class="search-box">
+          <input type="text" id="searchInput" placeholder="Search archives..." oninput="window.handleSearch()">
+        </div>
+        <!-- Auth / Profile Action Buttons -->
+        <nav id="navLinks" class="nav-links"></nav>
+      </div>
     </div>
   </header>
 
-  <!-- Main Content Layout (1440px Maximum Width) -->
+  <!-- Main Content Layout (1000px Max Width to Match Book Cover) -->
   <main class="container">
     <section id="postsContainer" class="posts-grid"></section>
     
@@ -194,7 +196,7 @@
             <h3>Reader Transcriptions</h3>
             <div id="commentsContainer"></div>
             <div id="commentFormSection" class="hidden">
-              <input type="text" id="commentInput" placeholder="Write a comment...">
+              <input type="text" id="commentInput" placeholder="Write a comment... (Press Enter to post)">
               <button onclick="window.handleAddComment()">Inscribe Comment</button>
             </div>
             <p id="commentSignInNotice" class="login-notice">Please sign in to react or leave comments.</p>

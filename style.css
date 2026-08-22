@@ -15,7 +15,7 @@ body {
   min-height: 100vh;
 }
 
-/* Header & Navigation */
+/* Header & Navigation Layout */
 .site-header {
   position: fixed;
   top: 0;
@@ -32,7 +32,7 @@ body {
 
 .header-inner {
   width: 100%;
-  max-width: 1440px;
+  max-width: 1000px; /* Matched to 3D Book Width */
   height: 100%;
   display: flex;
   justify-content: space-between;
@@ -50,6 +50,12 @@ body {
   white-space: nowrap;
 }
 
+.nav-container {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
 .search-box input {
   background: #3d261a;
   border: 1px solid #8b5a2b;
@@ -57,7 +63,7 @@ body {
   padding: 6px 14px;
   border-radius: 4px;
   font-family: 'MedievalSharp', serif;
-  width: 250px;
+  width: 220px;
 }
 
 .nav-links {
@@ -76,26 +82,22 @@ body {
   font-family: 'MedievalSharp', serif;
 }
 
+/* Desktop: Hamburger Icon Strictly Hidden */
 .hamburger-btn {
-  display: none;
-  background: none;
-  border: none;
-  color: #d4af37;
-  font-size: 1.8rem;
-  cursor: pointer;
+  display: none !important;
 }
 
-/* Layout Container (1440px Centered) */
+/* Layout Container (1000px Max Width to Match Book) */
 .container {
   width: 100%;
-  max-width: 1440px;
+  max-width: 1000px;
   margin: 0 auto;
   padding: 20px;
 }
 
 .posts-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
   gap: 25px;
 }
 
@@ -198,7 +200,7 @@ body {
 
 .footer-inner {
   width: 100%;
-  max-width: 1440px;
+  max-width: 1000px;
   height: 100%;
   display: flex;
   justify-content: space-between;
@@ -295,7 +297,7 @@ body {
 .editor-content table { border-collapse: collapse; width: 100%; margin: 8px 0; }
 .editor-content table, .editor-content th, .editor-content td { border: 1px solid #8b5a2b; padding: 6px; }
 
-/* 3D Animated Book Overlay (Corrected Full Width Opening Alignment) */
+/* 3D Animated Book Overlay (Exact Width Matched to Blog - 1000px) */
 #bookModal {
   position: fixed;
   top: 0;
@@ -312,9 +314,9 @@ body {
 
 .book-viewport {
   perspective: 2000px;
-  width: 95vw;
-  max-width: 1440px;
-  height: 90vh;
+  width: 90vw;
+  max-width: 1000px;
+  height: 85vh;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -351,7 +353,7 @@ body {
   padding: 30px;
   text-align: center;
   font-family: 'Cinzel Decorative', serif;
-  font-size: 2.5rem;
+  font-size: 2.2rem;
   text-shadow: 2px 2px 8px #000;
 }
 
@@ -397,33 +399,45 @@ body {
 .comment-author { font-weight: bold; color: #5c3a21; font-size: 0.9rem; margin-bottom: 2px; }
 .comment-text { color: #2b1d0c; font-size: 0.95rem; }
 
-/* Mobile Responsive Styling */
+/* Mobile Only Hamburger & Menu Consolidation (<= 768px) */
 @media (max-width: 768px) {
   .hamburger-btn {
-    display: block;
+    display: block !important;
+    background: none;
+    border: none;
+    color: #d4af37;
+    font-size: 1.8rem;
+    cursor: pointer;
   }
 
-  .search-box input {
-    width: 140px;
-  }
-
-  .nav-links {
+  .nav-container {
     display: none;
     position: absolute;
     top: 60px;
     right: 0;
-    width: 200px;
+    width: 240px;
     background: #2b1810;
     border: 2px solid #8b5a2b;
     border-top: none;
     flex-direction: column;
-    padding: 10px;
-    gap: 8px;
+    padding: 15px;
+    gap: 12px;
     box-shadow: 0 8px 20px rgba(0,0,0,0.8);
+    z-index: 999;
   }
 
-  .nav-links.active {
+  .nav-container.active {
     display: flex;
+  }
+
+  .search-box input {
+    width: 100%;
+  }
+
+  .nav-links {
+    flex-direction: column;
+    width: 100%;
+    gap: 8px;
   }
 
   .nav-links button {
@@ -437,6 +451,6 @@ body {
   }
 
   .cover-title {
-    font-size: 1.6rem;
+    font-size: 1.5rem;
   }
 }

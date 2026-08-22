@@ -31,24 +31,24 @@ let activePostId = null;
 
 // Mobile Navigation Toggle
 window.toggleMobileNav = () => {
-  const nav = document.getElementById("navLinks");
-  nav.classList.toggle("active");
+  const container = document.getElementById("navContainer");
+  container.classList.toggle("active");
 };
 
 // Modal Toggles
 window.toggleAuthModal = () => {
-  document.getElementById("navLinks").classList.remove("active");
+  document.getElementById("navContainer").classList.remove("active");
   document.getElementById("authModal").classList.toggle("hidden");
 };
 
 window.toggleProfileModal = () => {
-  document.getElementById("navLinks").classList.remove("active");
+  document.getElementById("navContainer").classList.remove("active");
   if (auth.currentUser) renderUserProfile();
   document.getElementById("profileModal").classList.toggle("hidden");
 };
 
 window.toggleWriteModal = (reset = true) => {
-  document.getElementById("navLinks").classList.remove("active");
+  document.getElementById("navContainer").classList.remove("active");
   if (reset) {
     document.getElementById("editingPostId").value = "";
     document.getElementById("postTitle").value = "";
@@ -60,7 +60,7 @@ window.toggleWriteModal = (reset = true) => {
 
 // Authentication
 window.handleAuthSubmit = async (e) => {
-  e.preventDefault();
+  if (e) e.preventDefault();
   const email = document.getElementById("authEmail").value;
   const pass = document.getElementById("authPassword").value;
   if (!email || !pass) return alert("Fill in email and password.");
@@ -84,7 +84,7 @@ window.handleEmailRegister = async () => {
 };
 
 window.handleForgotPassword = async (e) => {
-  e.preventDefault();
+  if (e) e.preventDefault();
   const email = document.getElementById("authEmail").value;
   if (!email) return alert("Please enter your email address first.");
 
@@ -95,7 +95,7 @@ window.handleForgotPassword = async (e) => {
 };
 
 window.handleLogout = async () => {
-  document.getElementById("navLinks").classList.remove("active");
+  document.getElementById("navContainer").classList.remove("active");
   await signOut(auth);
 };
 
@@ -142,7 +142,7 @@ async function renderUserProfile() {
   const userPosts = allPosts.filter(p => p.authorId === user.uid);
   const container = document.getElementById("userPostsContainer");
   container.innerHTML = userPosts.length ? userPosts.map(p => `
-    <div style="margin: 8px 0; padding: 8px; border-bottom: 1px dashed #8b5a2b; display:flex; justify-space-between; align-items:center;">
+    <div style="margin: 8px 0; padding: 8px; border-bottom: 1px dashed #8b5a2b; display:flex; justify-content:space-between; align-items:center;">
       <span>${p.title}</span>
       <div>
         <button onclick="window.handleEdit('${p.id}')">Edit</button>
@@ -409,6 +409,31 @@ window.handleDeleteComment = async (postId, commentId) => {
   await deleteDoc(doc(db, `posts/${postId}/comments`, commentId));
   loadComments(postId);
 };
+
+// Keyboard Enter Listener Submissions for Comments & Blog Post Inputs
+document.addEventListener("DOMContentLoaded", () => {
+  // Enter key inside comment input
+  const commentInput = document.getElementById("commentInput");
+  if (commentInput) {
+    commentInput.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        window.handleAddComment();
+      }
+    });
+  }
+
+  // Enter key inside manuscript post title input
+  const postTitle = document.getElementById("postTitle");
+  if (postTitle) {
+    postTitle.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        document.getElementById("editorBody").focus();
+      }
+    });
+  }
+});
 
 async function loadPosts() {
   const q = query(collection(db, "posts"), orderBy("createdAt", "desc"));
